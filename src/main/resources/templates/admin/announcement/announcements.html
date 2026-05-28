@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Announcements</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- 사이드바 -->
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <!-- 메인 -->
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📢 공지사항 관리</h2>
+                <a class="btn btn-primary"
+                   th:href="@{/htj-admin/announcement/saveForm}">
+                    공지 등록
+                </a>
+            </div>
+
+            <!-- 테이블 -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>제목</th>
+                            <th>고정</th>
+                            <th>작성일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="a : ${announcements.content}">
+                            <td th:text="${a.id()}"></td>
+
+                            <td>
+                                <span th:text="${a.title()}"></span>
+                                <span class="badge bg-warning text-dark ms-2"
+                                      th:if="${a.pinned()}">PIN</span>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-success"
+                                      th:if="${a.pinned()}">고정</span>
+                                <span class="badge bg-secondary"
+                                      th:unless="${a.pinned()}">일반</span>
+                            </td>
+
+                            <td th:text="${#temporals.format(a.createdDate(), 'yyyy-MM-dd')}"></td>
+
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   th:href="@{/htj-admin/announcement/{id}(id=${a.id()})}">
+                                    상세
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${announcements.content.isEmpty()}">
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                등록된 공지가 없습니다.
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+            <!-- 페이징 -->
+            <nav class="mt-4" th:if="${announcements.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item"
+                        th:classappend="${announcements.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/announcement/announcements(page=${announcements.number - 1}, size=${announcements.size})}">
+                            이전
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, announcements.totalPages - 1)}"
+                        th:classappend="${pageNum == announcements.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/announcement/announcements(page=${pageNum}, size=${announcements.size})}"
+                           th:text="${pageNum + 1}">
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:classappend="${announcements.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/announcement/announcements(page=${announcements.number + 1}, size=${announcements.size})}">
+                            다음
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>

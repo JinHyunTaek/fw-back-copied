@@ -1,0 +1,57 @@
+services:
+# docker compose down, docker stop 써야 restart 정책 무시됨 (ec2 reboot, app crash, oom 시에는 자동 재실행)
+  spring-boot-app:
+    volumes:
+      - /home/ubuntu/mma-server/secrets/ufc_data.json:/my-files/ufc_data.json:ro
+      - /home/ubuntu/mma-server/secrets/firebase-credentials.json:/my-files/firebase-credentials.json:ro
+      - /home/ubuntu/mma-server/secrets/seed_faq.json:/my-files/seed_faq.json:ro
+    image: ${SPRING_ECR_IMAGE}
+    container_name: spring-boot-container
+    ports:
+      - "8080:8080"
+      - "9091:9091"
+    #    depends_on 속성을 통해 mysql 컨테이너부터 실행되고 나서 스프링 서버 컨테이너가 실행되는 것을 보장
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+    networks:
+      - internal
+    restart: always
+
+  my-cache:
+    image: redis
+    networks:
+      - internal
+    expose:
+      - 6379
+    volumes:
+      - ./redis_data:/data
+    restart: always
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    environment:
+      REDIS_ADDR: my-cache:6379
+    ports:
+      - "9121:9121"
+    networks:
+      - internal
+    restart: always
+    depends_on:
+      - my-cache
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: always
+    pid: host
+    network_mode: host
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - '--path.rootfs=/host'
+
+networks:
+  internal:
+    driver: bridge

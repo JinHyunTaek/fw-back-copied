@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .sidebar-menu li a {
+            display: block;
+            padding: 14px 20px;
+            color: #e5e7eb;
+            text-decoration: none;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: #374151;
+        }
+
+    </style>
+</head>
+<body>
+<div class="text-white p-3">
+    <h4 class="mb-4">ADMIN</h4>
+
+    <ul class="nav nav-pills flex-column gap-2">
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'dashboard'} ? 'active'"
+               th:href="@{/htj-admin/dashboard}">
+                📊 대시보드
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'user'} ? 'active'"
+               th:href="@{/htj-admin/user/users}">
+                🧑‍🦲 사용자 목록
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'report'} ? 'active'"
+               th:href="@{/htj-admin/report/all}">
+                🚨 신고 내역
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'announcement'} ? 'active'"
+               th:href="@{/htj-admin/announcement/announcements}">
+                📢 공지사항
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'inquiry'} ? 'active'"
+               th:href="@{/htj-admin/inquiry/all}">
+                📩 1:1 문의 내역
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'fighter'} ? 'active'"
+               th:href="@{/htj-admin/fighter/fighters}">
+                🥊 파이터 목록
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'faq'} ? 'active'"
+               th:href="@{/htj-admin/faq/faqs}">
+                ❓ FAQ 목록
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'update-buttons'} ? 'active'"
+               th:href="@{/htj-admin/update-buttons}">
+                🕒 메인 도메인 최신 동기화
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'app-status'} ? 'active'"
+               th:href="@{/htj-admin/system/app-status}">
+                ⚙️ 앱 버전 설정
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'stream-event'} ? 'active'"
+               th:href="@{/htj-admin/stream/event}">
+                🎬 현재 이벤트 편집
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <form class="nav-link text-white" th:action="@{/htj-admin/logout}" method="post">
+                <button type="submit" class="logout-btn">로그아웃</button>
+            </form>
+        </li>
+    </ul>
+</div>
+
+</body>
+</html>

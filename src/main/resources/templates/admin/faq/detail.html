@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>FAQ Detail</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+<div class="container mt-5">
+
+    <div class="mb-4">
+        <h2>FAQ Detail</h2>
+        <p class="text-muted">
+            ID: <span th:text="${faqId}"></span>
+        </p>
+    </div>
+
+    <form th:action="@{/htj-admin/faq/{id}(id=${faqId})}"
+          th:object="${form}"
+          method="post">
+
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <select class="form-select"
+                    th:field="*{faqCategory}">
+                <option th:each="category : ${categories}"
+                        th:value="${category}"
+                        th:text="${category}">
+                </option>
+            </select>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('faqCategory')}"
+                 th:errors="*{faqCategory}">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Question</label>
+            <input type="text"
+                   class="form-control"
+                   th:field="*{question}">
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('question')}"
+                 th:errors="*{question}">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Answer</label>
+            <textarea class="form-control"
+                      rows="6"
+                      th:field="*{answer}">
+            </textarea>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('answer')}"
+                 th:errors="*{answer}">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a th:href="@{/htj-admin/faq/faqs}" class="btn btn-secondary">
+                Back to List
+            </a>
+            <button type="submit" class="btn btn-success">
+                Update
+            </button>
+        </div>
+
+    </form>
+
+</div>
+</body>
+</html>

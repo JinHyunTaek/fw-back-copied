@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports</title>
+    <style>
+        .pagination {
+            display: flex;
+            list-style: none;
+            gap: 6px;
+            padding: 0;
+        }
+
+        .pagination li a {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            border-radius: 4px;
+        }
+
+        .pagination li.active a {
+            background-color: #222;
+            color: #fff;
+            border-color: #222;
+        }
+
+        .pagination li.disabled a {
+            pointer-events: none;
+            color: #aaa;
+            border-color: #eee;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- 사이드바 -->
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <!-- 메인 콘텐츠 -->
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <h2 class="mb-4">📩 1:1 문의 내역</h2>
+
+            <!-- 테이블 -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>문의 PK</th>
+                            <th>문의자 닉네임</th>
+                            <th>사유</th>
+                            <th>문의일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="inquiry : ${inquiries.content}">
+                            <td th:text="${inquiry.id()}"></td>
+                            <td th:text="${inquiry.nickname()}"></td>
+                            <td>
+                                <span class="badge bg-danger"
+                                      th:text="${inquiry.category().getDescription()}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(inquiry.createdAt(), 'yyyy-MM-dd HH:mm')}"></td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   th:href="@{/htj-admin/inquiry/{id}(id=${inquiry.id()})}">
+                                    상세
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${inquiries.content.isEmpty()}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                문의 내역이 없습니다.
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+            <!-- 페이징 -->
+            <nav class="mt-4" th:if="${inquiries.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item"
+                        th:classappend="${inquiries.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/inquiry/all(page=${inquiries.number - 1}, size=${inquiries.size})}">
+                            이전
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, inquiries.totalPages - 1)}"
+                        th:classappend="${pageNum == inquiries.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/inquiry/all(page=${pageNum}, size=${inquiries.size})}"
+                           th:text="${pageNum + 1}">
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:classappend="${inquiries.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/inquiry/all(page=${inquiries.number + 1}, size=${inquiries.size})}">
+                            다음
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </main>
+
+    </div>
+</div>
+
+</body>
+</html>

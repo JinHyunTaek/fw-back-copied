@@ -1,0 +1,59 @@
+package my.mma.api.exception;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+import static org.springframework.http.HttpStatus.*;
+
+@RequiredArgsConstructor
+@Getter
+public enum ErrorCode {
+
+    //kakao
+    KAKAO_API_CALL_FAILED(BAD_REQUEST),
+    NO_KAKAO_CODE_CONFIGURED(BAD_REQUEST),
+    //user
+    NO_SUCH_USER_FOUND_400(BAD_REQUEST),
+    NO_SUCH_EMAIL_CONFIGURED_400(BAD_REQUEST),
+    UPDATE_NICKNAME_NOT_AVAILABLE_403(FORBIDDEN),
+    // 회원가입할 때
+    DUPLICATED_EMAIL_400(BAD_REQUEST),
+    WITHDRAWN_USER_403( FORBIDDEN),
+    // 로그인 시도할 때
+    DUPLICATED_EMAIL_403(FORBIDDEN),
+    DUPLICATED_NICKNAME_400(BAD_REQUEST),
+    DUPLICATED_PASSWORD_400(BAD_REQUEST),
+    //authentication, authorization
+    JWT_TOKEN_EXPIRED(UNAUTHORIZED),
+    UNSUPPORTED_JWT(UNAUTHORIZED),
+    SERVER_ERROR_500(HttpStatus.INTERNAL_SERVER_ERROR),
+    SOCIAL_TOKEN_VERIFY_FAILED_400(BAD_REQUEST),
+    // fight event
+    NO_SUCH_EVENT_FOUND_400(BAD_REQUEST),
+    // fighter fight event
+    NO_SUCH_FIGHT_FOUND_400(BAD_REQUEST),
+    // fighter
+    NO_SUCH_FIGHTER_CONFIGURED_400(BAD_REQUEST),
+    // bad bet date
+    BET_NOT_AVAILABLE_DATE_403(FORBIDDEN),
+    BET_LIMIT_EXCEED_403(FORBIDDEN),
+    BET_CANCEL_LIMIT_EXCEED_403(FORBIDDEN),
+    INVALID_SEEDPOINT_400(BAD_REQUEST),
+    // global
+    VALIDATION_FAILED_400(BAD_REQUEST),
+    RESOURCE_NOT_FOUND(BAD_REQUEST),
+    BAD_REQUEST_400(BAD_REQUEST),
+    URL_NOT_FOUND(NOT_FOUND),
+    // game
+    GAME_ATTEMPT_COUNT_EXPIRED_400(BAD_REQUEST),
+    AD_COUNT_EXPIRED_400(BAD_REQUEST),
+    // bet
+    FIGHT_CANCELED_400(BAD_REQUEST),
+    LOW_USER_POINT_400(BAD_REQUEST),
+    // file upload
+    INVALID_FILE_400(BAD_REQUEST);
+
+    private final HttpStatus status;
+
+}

@@ -1,0 +1,5 @@
+package my.mma.api.faq.entity;
+
+public enum FAQCategory {
+    MAIN, PREDICTION, POINT, ACCOUNT, COMMUNITY, FIGHTER_OR_FIGHT_EVENT, ALERT, BAN_OR_POLICY, GAME, RANKING, PRIVACY, ETC
+}

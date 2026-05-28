@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Announcement Detail</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container mt-5">
+
+    <div class="mb-4">
+        <h2>Announcement Detail</h2>
+        <p class="text-muted">
+            ID: <span th:text="${announcementId}"></span>
+        </p>
+    </div>
+
+    <form th:action="@{/htj-admin/announcement/{id}(id=${announcementId})}"
+          th:object="${form}"
+          method="post">
+
+        <!-- 제목 -->
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text"
+                   class="form-control"
+                   th:field="*{title}">
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('title')}"
+                 th:errors="*{title}">
+            </div>
+        </div>
+
+        <!-- 내용 -->
+        <div class="mb-3">
+            <label class="form-label">Content</label>
+            <textarea class="form-control"
+                      rows="8"
+                      th:field="*{content}">
+            </textarea>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('content')}"
+                 th:errors="*{content}">
+            </div>
+        </div>
+
+        <!-- 고정 -->
+        <div class="form-check mb-4">
+            <input class="form-check-input"
+                   type="checkbox"
+                   th:field="*{pinned}"
+                   id="pinnedCheck">
+            <label class="form-check-label" for="pinnedCheck">
+                상단 고정
+            </label>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="d-flex justify-content-between">
+
+            <a th:href="@{/htj-admin/announcement/announcements}"
+               class="btn btn-secondary">
+                목록
+            </a>
+
+            <div>
+                <button type="submit"
+                        class="btn btn-success">
+                    수정
+                </button>
+
+                <button type="button"
+                        class="btn btn-danger ms-2"
+                        th:onclick="|deleteAnnouncement(${announcementId})|">
+                    삭제
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    function deleteAnnouncement(id) {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+
+        fetch('/htj-admin/announcement/' + id, {
+            method: 'DELETE'
+        }).then(() => {
+            window.location.href = '/htj-admin/announcement/announcements';
+        });
+    }
+</script>
+
+</body>
+</html>

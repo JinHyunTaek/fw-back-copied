@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>User Detail</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+
+        <!-- Sidebar -->
+        <nav class="col-md-2 bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <!-- Main -->
+        <main class="col-md-10 px-4">
+
+            <h2 class="mb-4">👤 User Detail</h2>
+
+            <!-- User Info -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    Basic Information
+                </div>
+                <div class="row align-items-center">
+
+                    <!-- Profile Image -->
+                    <div class="col-md-2 text-center mb-3">
+                        <img th:src="${user.profileImgUrl}"
+                             alt="User Image"
+                             class="img-fluid rounded-circle border"
+                             style="width: 150px; height: 150px; object-fit: cover;"/>
+                    </div>
+
+                    <!-- Basic Info -->
+                    <div class="col-md-5">
+                        <p><strong>ID:</strong> <span th:text="${user.id}"></span></p>
+                        <p><strong>Email:</strong> <span th:text="${user.email}"></span></p>
+                        <p><strong>Nickname:</strong> <span th:text="${user.nickname}"></span></p>
+                    </div>
+
+                    <!-- Point Info -->
+                    <div class="col-md-5">
+                        <p><strong>Point:</strong> <span th:text="${user.point}"></span></p>
+                        <p><strong>Earned Bet Point:</strong>
+                            <span th:text="${user.earnedBetSucceedPoint}"></span>
+                        </p>
+                        <p>
+                            <strong>Status:</strong>
+                            <span class="badge"
+                                  th:classappend="${user.punished} ? 'bg-danger' : 'bg-success'"
+                                  th:text="${user.punished} ? 'BANNED' : 'ACTIVE'">
+            </span>
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Actions -->
+            <div class="row mb-4">
+
+                <!-- Update Bet Point -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            🎯 Update Bet Points
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/htj-admin/user/betPoint/{id}(id=${user.id})}"
+                                  method="post"
+                                  th:object="${betForm}">
+                                <div class="mb-3">
+                                    <label class="form-label">Point</label>
+                                    <input type="number" class="form-control"
+                                           th:field="*{point}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Earned Bet Point</label>
+                                    <input type="number" class="form-control"
+                                           th:field="*{earnedBetSucceedPoint}">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Update
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ban State -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            🚫 Ban / Unban User
+                        </div>
+                        <div class="card-body">
+                            <form th:action="@{/htj-admin/user/banState/{id}(id=${user.id})}"
+                                  method="post"
+                                  th:object="${reportForm}">
+                                <div class="mb-3">
+                                    <label class="form-label">Ban Reason</label>
+                                    <select class="form-select"
+                                            th:field="*{reportCategory}">
+                                        <option value="">-- Select --</option>
+                                        <option th:each="c : ${reportCategories}"
+                                                th:value="${c}"
+                                                th:text="${c.name}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           th:field="*{punish}">
+                                    <label class="form-check-label">
+                                        Ban user
+                                    </label>
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100">
+                                    Apply
+                                </button>
+                                <div class="text-danger"
+                                     th:if="${#fields.hasErrors('reportCategory')}"
+                                     th:errors="*{reportCategory}">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${param.tab == null} ? 'active'"
+                       th:href="@{/htj-admin/user/{id}(id=${user.id})}">
+                        Info
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${param.tab == 'bet'} ? 'active'"
+                       th:href="@{/htj-admin/user/{id}(id=${user.id}, tab='bet')}">
+                        Recent Bets
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Recent Bets -->
+            <div th:if="${bets != null}">
+                <div class="card mb-3" th:each="bet : ${bets}">
+
+                    <!-- Event Name -->
+                    <div class="card-header fw-bold"
+                         th:text="${bet.eventName}">
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+
+                        <!-- Single Bet -->
+                        <li class="list-group-item"
+                            th:each="single : ${bet.singleBets}">
+
+                            <!-- Single Bet Summary -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span th:text="${#temporals.format(single.createdDateTime, 'yyyy-MM-dd HH:mm')}"></span>
+                                <span><strong th:text="${single.seedPoint}"></strong> pt</span>
+                                <span class="badge"
+                                      th:classappend="${single.succeed == null} ? 'bg-warning' :
+                                       (${single.succeed} ? 'bg-success' : 'bg-danger')"
+                                      th:text="${single.succeed == null} ? 'YET' :
+                                      (${single.succeed} ? 'SUCCESS' : 'FAIL')"></span>
+                            </div>
+                            <!-- Bet Cards -->
+                            <div class="border rounded p-2 mb-2"
+                                 th:each="card : ${single.betCards}">
+
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong th:text="${card.winnerName}"></strong>
+                                        vs
+                                        <strong th:text="${card.loserName}"></strong>
+                                    </div>
+                                    <span class="badge"
+                                          th:classappend="${card.succeed == null} ? 'bg-warning' :
+                                       (${card.succeed} ? 'bg-success' : 'bg-danger')"
+                                          th:text="${single.succeed == null} ? 'YET' :
+                                      (${card.succeed} ? 'SUCCESS' : 'FAIL')"></span>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    Prediction:
+                                    <span th:text="${card.betPrediction.myWinnerName}"></span>
+                                    /
+                                    <span th:text="${card.betPrediction.winMethod}"></span>
+                                    <span th:if="${card.betPrediction.winRound != null}">
+                                        (R<span th:text="${card.betPrediction.winRound}"></span>)
+                                    </span>
+                                    <span th:if="${card.betPrediction.draw}">(DRAW)</span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>

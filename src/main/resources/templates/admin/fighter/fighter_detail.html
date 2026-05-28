@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fighter Detail</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <form th:action="@{/htj-admin/fighter/{id}(id=${fighter.id})}"
+          method="post" th:object="${form}">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Fighter Information</h5>
+            </div>
+
+            <div class="card-body">
+
+                <!-- Name / Korean Name / Nickname -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">영문명</label>
+                        <input type="text" class="form-control" th:field="*{name}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">한글명</label>
+                        <input type="text" class="form-control" th:field="*{koreanName}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">닉네임</label>
+                        <input type="text" class="form-control" th:field="*{nickname}">
+                    </div>
+                </div>
+
+                <!-- Ranking (read-only) -->
+                <div class="mb-3">
+                    <label class="form-label">랭킹</label>
+                    <input type="number" class="form-control" th:value="${fighter.ranking}" readonly>
+                </div>
+
+                <!-- Physical -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">키 (cm)</label>
+                        <input type="number" class="form-control" th:field="*{height}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">무게 (kg)</label>
+                        <input type="number" step="0.1" class="form-control" th:field="*{weight}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">리치 (cm)</label>
+                        <input type="number" class="form-control" th:field="*{reach}">
+                    </div>
+                </div>
+
+                <!-- Birthday -->
+                <div class="mb-3">
+                    <label class="form-label">생년월일</label>
+                    <input type="date" class="form-control" name="birthday"
+                           th:value="${fighter.birthday != null ? #temporals.format(fighter.birthday, 'yyyy-MM-dd') : ''}">
+                </div>
+
+                <!-- 국적 -->
+                <div class="mb-3">
+                    <label class="form-label">국적</label>
+                    <select class="form-select" name="nationality">
+                        <option value="">선택 안 함</option>
+                        <option th:each="nat : ${nationalities}"
+                                th:value="${nat.name()}"
+                                th:text="${nat.description}"
+                                th:selected="${nat == form.nationality()}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Fight Record -->
+                <div class="mb-4">
+                    <label class="form-label">전적</label>
+                    <div class="d-flex gap-2">
+                        <div class="input-group">
+                            <input type="number" class="form-control" th:field="*{win}">
+                            <span class="input-group-text">W</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" class="form-control" th:field="*{loss}">
+                            <span class="input-group-text">L</span>
+                        </div>
+                        <div class="input-group">
+                            <input type="number" class="form-control" th:field="*{draw}">
+                            <span class="input-group-text">D</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/htj-admin/fighter/fighters}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+
+            </div>
+        </div>
+    </form>
+
+    <hr class="my-4">
+
+    <!-- Image Update -->
+<!--    <div class="card shadow-sm">-->
+<!--        <div class="card-header bg-secondary text-white">-->
+<!--            <h6 class="mb-0">Headshot &amp; Body Image Update (S3)</h6>-->
+<!--        </div>-->
+<!--        <div class="card-body">-->
+<!--            <form th:action="@{/htj-admin/fighter/image}" method="post">-->
+<!--                <input type="hidden" name="name" th:value="${fighter.name}">-->
+<!--                <div class="row align-items-end g-2">-->
+<!--                    <div class="col-md-8">-->
+<!--                        <label class="form-label">Image Source Name</label>-->
+<!--                        <input type="text" name="nameUrl" class="form-control"-->
+<!--                               th:placeholder="${fighter.name}" required>-->
+<!--                    </div>-->
+<!--                    <div class="col-md-4">-->
+<!--                        <button type="submit" class="btn btn-outline-primary w-100">Update Image</button>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+
+</div>
+</body>
+</html>

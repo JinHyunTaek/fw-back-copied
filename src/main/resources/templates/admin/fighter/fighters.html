@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fighter Management</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .table th, .table td {
+            vertical-align: middle;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        .headshot {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+            <!-- Search -->
+            <form method="get" th:action="@{/htj-admin/fighter/fighters}" class="row g-2 mb-3">
+                <div class="col-auto">
+                    <input type="text" name="name" class="form-control" placeholder="Search by name"
+                           th:value="${param.name}"/>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </form>
+
+            <!-- Fighter Table -->
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                <tr>
+                    <th>PK</th>
+                    <th>포토</th>
+                    <th>영문명</th>
+                    <th>한글명</th>
+                    <th>랭킹</th>
+                    <th>전적</th>
+                    <th>국적</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fighter : ${page.content}"
+                    th:onclick="|location.href='@{/htj-admin/fighter/{id}(id=${fighter.id})}'|"
+                    style="cursor: pointer;">
+                    <td th:text="${fighter.id}"></td>
+<!--                    <td><img th:src="${fighter.headshotUrl}" class="headshot" alt="headshot"/></td>-->
+                    <td th:text="${fighter.name}"></td>
+                    <td th:text="${fighter.koreanName}"></td>
+                    <td th:text="${fighter.ranking}"></td>
+                    <td th:text="${fighter.record.win+'-'+fighter.record.loss+'-'+fighter.record.draw}"></td>
+                    <td th:text="${fighter.nationality?.description}"></td>
+                </tr>
+                <tr th:if="${page.totalElements == 0}">
+                    <td colspan="7" class="text-center">No fighters found</td>
+                </tr>
+                </tbody>
+            </table>
+            <!--                <div id="hiddenInputs"></div>-->
+
+            <!-- Pagination -->
+            <nav class="mt-4" th:if="${page.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/fighter/fighters(page=${page.number - 1}, name=${name})}">이전</a>
+                    </li>
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence((page.number / 10) * 10,
+                            T(java.lang.Math).min((page.number / 10) * 10 + 9, page.totalPages - 1))}"
+                        th:classappend="${pageNum == page.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/fighter/fighters(page=${pageNum}, name=${name})}"
+                           th:text="${pageNum + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/fighter/fighters(page=${page.number + 1}, name=${name})}">다음</a>
+                    </li>
+                </ul>
+            </nav>
+        </main>
+    </div>
+</div>
+
+</body>
+</html>
