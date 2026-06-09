@@ -87,8 +87,8 @@ public class CurrentFightEventNotificationService {
             int end = Math.min(i + BATCH_SIZE, userTokens.size());
             MulticastMessage message = MulticastMessage.builder()
                     .setNotification(Notification.builder()
-                            .setTitle("배팅 정산 완료")
-                            .setBody("배팅 결과가 확정되었습니다. 확인해보세요!")
+                            .setTitle("경기 예측 점수 정산 완료")
+                            .setBody("경기 예측 결과가 확정되었습니다. 확인해보세요!")
                             .build())
                     .putData("type", "BET_SETTLEMENT")
                     .putData("eventId", String.valueOf(eventId))
@@ -102,8 +102,8 @@ public class CurrentFightEventNotificationService {
         return MulticastMessage.builder()
                 .setNotification(
                         Notification.builder()
-                                .setTitle("경기 시작 알림")
-                                .setBody(eventName + " 경기가 곧 시작됩니다!")
+                                .setTitle("메인 카드 시작 알림")
+                                .setBody(eventName + " 메인 카드가 곧 시작됩니다!")
                                 .build()
                 )
                 .putData("type", "EVENT_START")

@@ -3,9 +3,9 @@ package my.mma.api.announcement.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.mma.api.announcement.dto.AnnouncementContentDto;
-import my.mma.admin.web.dto.announcement.AnnouncementDetailDto;
+import my.mma.api.announcement.dto.AdminAnnouncementDetailDto;
 import my.mma.api.announcement.dto.AnnouncementDto;
-import my.mma.admin.web.dto.announcement.AnnouncementRequest;
+import my.mma.api.announcement.dto.AdminAnnouncementRequest;
 import my.mma.api.announcement.entity.Announcement;
 import my.mma.api.announcement.repository.AnnounceRepository;
 import my.mma.api.exception.ErrorCode;
@@ -51,14 +51,14 @@ public class AnnouncementService {
     }
 
     // for admin
-    public AnnouncementDetailDto detail(Long id) {
+    public AdminAnnouncementDetailDto detail(Long id) {
         Announcement announcement = getAnnouncement(id);
-        return AnnouncementDetailDto.toDto(announcement);
+        return AdminAnnouncementDetailDto.toDto(announcement);
     }
 
     @CacheEvict(value = "announcements", allEntries = true)
     @Transactional
-    public Long save(AnnouncementRequest request) {
+    public Long save(AdminAnnouncementRequest request) {
         return announceRepository.save(Announcement.builder()
                 .title(request.title())
                 .content(request.content())
@@ -71,7 +71,7 @@ public class AnnouncementService {
             @CacheEvict(value = "announcementContent", key = "#p0")
     })
     @Transactional
-    public void updateAnnouncement(Long id, AnnouncementRequest request) {
+    public void updateAnnouncement(Long id, AdminAnnouncementRequest request) {
         Announcement announcement = getAnnouncement(id);
         announcement.updateAnnouncement(request.title(), request.content(), request.pinned());
     }

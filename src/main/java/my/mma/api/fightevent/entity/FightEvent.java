@@ -97,4 +97,10 @@ public class FightEvent extends BaseEntity {
         this.mainCardDateTimeInfo = main;
     }
 
+    public void updateCardCnts(Integer earlyCardCnt, Integer prelimCardCnt, Integer mainCardCnt) {
+        this.earlyCardCnt = earlyCardCnt;
+        this.prelimCardCnt = prelimCardCnt;
+        this.mainCardCnt = mainCardCnt;
+    }
+
 }

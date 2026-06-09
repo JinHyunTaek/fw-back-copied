@@ -18,6 +18,16 @@ public interface FighterFightEventRepository extends JpaRepository<FighterFightE
              " order by ffe.fightEvent.eventDate desc")
     List<FighterFightEvent> findByFighterIdAndYear(@Param("fighterId") Long fighterId, @Param("year") int year);
 
+    @Query("select ffe from FighterFightEvent ffe join fetch ffe.fightEvent" +
+            " join fetch ffe.winner join fetch ffe.loser" +
+            " where (ffe.loser.name=:fighterName or ffe.winner.name=:fighterName) and ffe.canceled=false")
+    List<FighterFightEvent> findByFighterName(@Param("fighterName") String fighterName);
+
+    @Query("select ffe from FighterFightEvent ffe join fetch ffe.fightEvent" +
+            " join fetch ffe.winner join fetch ffe.loser" +
+            " where (ffe.loser.id=:fighterId or ffe.winner.id=:fighterId) and ffe.canceled=false")
+    List<FighterFightEvent> findByFighterId(@Param("fighterId") Long fighterId);
+
     @Query("select ffe from FighterFightEvent ffe " +
             "join fetch ffe.fightEvent " +
             "join fetch ffe.winner " +

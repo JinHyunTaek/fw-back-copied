@@ -43,6 +43,9 @@ public class Fighter extends BaseEntity {
 
     private double avgRating;
 
+    @Embedded
+    private CareerStats careerStats;
+
     @Enumerated(EnumType.STRING)
     private Country nationality;
 
@@ -52,6 +55,10 @@ public class Fighter extends BaseEntity {
 
     public void updateRanking(Integer ranking) {
         this.ranking = ranking;
+    }
+
+    public void updateCareerStats(CareerStats careerStats){
+        this.careerStats = careerStats;
     }
 
     public void updateAvgRating(double avgRating) {

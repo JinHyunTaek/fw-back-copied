@@ -4,6 +4,7 @@ import my.mma.admin.event.dto.CrawledFightCard;
 import my.mma.admin.event.dto.CrawledPrevEvent;
 import my.mma.admin.event.dto.CrawledUpcomingEvent;
 import my.mma.admin.event.dto.CrawledUpcomingEvent.EventCrawlerDto;
+import my.mma.api.fighter.dto.CareerStatsDto;
 import my.mma.api.fighter.entity.Fighter;
 import my.mma.api.fighter.repository.FighterRepository;
 import my.mma.api.fightevent.dto.CardStartDateTimeInfoDto;
@@ -86,7 +87,9 @@ class FlaskEventServiceTest {
         return new CrawledFightCard(winner, loser, null, null, "Lightweight", false, false, false, null, null, false, false);
     }
 
-    /** BASE_CARDS 기반 5개 CrawledFightCard 생성 */
+    /**
+     * BASE_CARDS 기반 5개 CrawledFightCard 생성
+     */
     private List<CrawledFightCard> baseCards() {
         return BASE_CARDS.stream().map(p -> card(p[0], p[1])).toList();
     }
@@ -162,7 +165,10 @@ class FlaskEventServiceTest {
 
         CrawledUpcomingEvent crawledEvent = new CrawledUpcomingEvent(
                 names.stream().map(name -> new CrawledUpcomingEvent.FighterCrawlerDto(
-                        name, "10-1-0", "155", "180", "nick", "70", "Jan 01, 1990")).toList(),
+                        name, "10-1-0", "155", "180", "nick", "70", "Jan 01, 1990",
+                        new CareerStatsDto(
+                                1.1, 1.1, 1.1, 1.1, 1, 1, 1, 1)
+                )).toList(),
                 List.of(eventDto(cards))
         );
         given(restTemplate.getForObject(eq(FLASK_URI + "/upcoming_event"), eq(CrawledUpcomingEvent.class)))

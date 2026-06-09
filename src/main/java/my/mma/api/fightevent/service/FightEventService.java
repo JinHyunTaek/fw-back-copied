@@ -97,8 +97,8 @@ public class FightEventService {
         Fighter loser = ffe.getLoser();
 //        String winnerBodyUrl = s3Service.generateFighterBodyUrl(winner.getName());
 //        String loserBodyUrl = s3Service.generateFighterBodyUrl(loser.getName());
-        FighterFightEventCardFighterDto winnerCardDto = FighterFightEventCardFighterDto.toDto(winner);
-        FighterFightEventCardFighterDto loserCardDto = FighterFightEventCardFighterDto.toDto(loser);
+        FighterFightEventCardFighterDto winnerCardDto = FighterFightEventCardFighterDto.of(winner);
+        FighterFightEventCardFighterDto loserCardDto = FighterFightEventCardFighterDto.of(loser);
 //        winnerCardDto.setBodyUrl(winnerBodyUrl);
 //        loserCardDto.setBodyUrl(loserBodyUrl);
         return new FighterFightEventCardDetailDto(winnerCardDto, loserCardDto, ffe.getFightWeight().getDisplayName());

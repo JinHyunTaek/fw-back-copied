@@ -1,0 +1,1 @@
+alter table bet_card change win_round finish_round int;

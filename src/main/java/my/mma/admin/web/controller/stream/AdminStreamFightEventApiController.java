@@ -28,7 +28,8 @@ public class AdminStreamFightEventApiController {
                 request.name(), request.displayDate(),
                 request.earlyCardDate(), request.earlyCardTime(),
                 request.prelimCardDate(), request.prelimCardTime(),
-                request.mainCardDate(), request.mainCardTime());
+                request.mainCardDate(), request.mainCardTime(),
+                request.earlyCardCnt(), request.prelimCardCnt(), request.mainCardCnt());
         return ResponseEntity.ok().build();
     }
 
@@ -65,7 +66,8 @@ public class AdminStreamFightEventApiController {
             @NotNull LocalDate displayDate,
             LocalDate earlyCardDate, LocalTime earlyCardTime,
             LocalDate prelimCardDate, LocalTime prelimCardTime,
-            @NotNull LocalDate mainCardDate, @NotNull LocalTime mainCardTime
+            @NotNull LocalDate mainCardDate, @NotNull LocalTime mainCardTime,
+            Integer earlyCardCnt, Integer prelimCardCnt, Integer mainCardCnt
     ) {}
 
     public record FfeAddRequest(@NotNull Long winnerId, @NotNull Long loserId, @NotNull String fightWeight, boolean title, @NotNull Integer cardOrder) {}

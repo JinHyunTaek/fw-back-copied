@@ -44,7 +44,8 @@ public class AdminStreamFightEventService {
                                 LocalDate displayDate,
                                 LocalDate earlyDate, LocalTime earlyTime,
                                 LocalDate prelimDate, LocalTime prelimTime,
-                                LocalDate mainDate, LocalTime mainTime) {
+                                LocalDate mainDate, LocalTime mainTime,
+                                Integer earlyCardCnt, Integer prelimCardCnt, Integer mainCardCnt) {
         FightEvent event = fightEventRepository.findById(eventId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NO_SUCH_EVENT_FOUND_400));
         event.updateName(name);
@@ -54,6 +55,7 @@ public class AdminStreamFightEventService {
                 toInfo(prelimDate, prelimTime),
                 toInfo(mainDate, mainTime)
         );
+        event.updateCardCnts(earlyCardCnt, prelimCardCnt, mainCardCnt);
         if (!event.isCompleted()) {
             saveStreamFightEventService.syncStreamFightEvent();
         }

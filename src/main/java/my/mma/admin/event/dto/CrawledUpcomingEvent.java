@@ -3,6 +3,8 @@ package my.mma.admin.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import my.mma.api.fighter.dto.CareerStatsDto;
+import my.mma.api.fighter.entity.CareerStats;
 import my.mma.api.fighter.entity.FightRecord;
 import my.mma.api.fighter.entity.Fighter;
 import my.mma.api.fightevent.dto.CardStartDateTimeInfoDto;
@@ -29,7 +31,8 @@ public record CrawledUpcomingEvent(List<FighterCrawlerDto> fighters, List<EventC
             String height,
             String nickname,
             String reach,
-            String birthday
+            String birthday,
+            CareerStatsDto careerStats
     ) {
         public Fighter toEntity() {
             String[] split_record = record.split("-");
@@ -47,6 +50,7 @@ public record CrawledUpcomingEvent(List<FighterCrawlerDto> fighters, List<EventC
                     .nickname(this.nickname())
                     .reach(this.reach.contains("-") ? 0 : Integer.parseInt(this.reach))
                     .birthday(LocalDate.parse(this.birthday, DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)))
+                    .careerStats(CareerStats.of(careerStats))
                     .build();
         }
 

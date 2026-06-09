@@ -13,7 +13,7 @@ build/
 .settings
 .springBeans
 .sts4-cache
-bin/
+bing
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
@@ -41,7 +41,7 @@ eetcufc_data.json
 #yml, properties
 src/main/resources/application*.yml
 src/main/resources/application*.properties
-src/main/resources/db/prod/migration
+src/main/resources/db/dev
 mysql_data
 redis_data
 grafana-local-data

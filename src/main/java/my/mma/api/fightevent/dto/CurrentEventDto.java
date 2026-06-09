@@ -62,11 +62,19 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
                     .status(status)
                     .eventName(ffe.getFightEvent().getName())
                     .fightWeight(ffe.getFightWeight() != null ? ffe.getFightWeight().getDisplayName() : null)
-                    .winner(FighterFightEventCardFighterDto.toDto(ffe.getWinner()))
-                    .loser(FighterFightEventCardFighterDto.toDto(ffe.getLoser()))
+                    .winner(FighterFightEventCardFighterDto.of(ffe.getWinner()))
+                    .loser(FighterFightEventCardFighterDto.of(ffe.getLoser()))
                     .result(null)
                     .title(ffe.isTitle())
                     .build();
+        }
+
+        public void updateFighterInfo(Fighter fighter, boolean isWinner) {
+            if(isWinner){
+                this.winner = FighterFightEventCardFighterDto.of(fighter);
+            }else{
+                this.loser = FighterFightEventCardFighterDto.of(fighter);
+            }
         }
     }
 
@@ -87,7 +95,7 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
 
         private Double weight;
 
-        public static FighterFightEventCardFighterDto toDto(Fighter fighter) {
+        public static FighterFightEventCardFighterDto of(Fighter fighter) {
             return toDto(fighter,
                     builder()
                             .reach(fighter.getReach())

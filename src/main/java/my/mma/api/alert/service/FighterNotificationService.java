@@ -49,37 +49,37 @@ public class FighterNotificationService {
         CurrentEventDto currentEvent = streamFightEventRedisUtils.getData(RedisKey.CURRENT_EVENT.getKey());
         if (currentEvent != null) {
             LocalDate date = currentEvent.getDisplayDate();
-            if (isThisWeek(date)) {
-                List<Message> messages = new ArrayList<>();
-                String eventName = currentEvent.getName();
+//            if (isThisWeek(date)) {
+            List<Message> messages = new ArrayList<>();
+            String eventName = currentEvent.getName();
 
-                Map<Long, String> fighterNameMap = getFighterNameMapFromCurrentEvent(currentEvent);
+            Map<Long, String> fighterNameMap = getFighterNameMapFromCurrentEvent(currentEvent);
 
-                Set<Long> fighterIds = currentEvent.getFighterFightEvents().stream()
-                        .flatMap(ffe -> Stream.of(ffe.getWinner().getId(), ffe.getLoser().getId())).collect(Collectors.toSet());
+            Set<Long> fighterIds = currentEvent.getFighterFightEvents().stream()
+                    .flatMap(ffe -> Stream.of(ffe.getWinner().getId(), ffe.getLoser().getId())).collect(Collectors.toSet());
 
-                List<Alert> alerts = alertRepository.findByAlertTargetAndTargetIdIn(AlertTarget.FIGHTER, fighterIds);
-                Map<User, List<Alert>> userAlerts = alerts.stream()
-                        .collect(Collectors.groupingBy(Alert::getUser));
-                // user : List<Alert> (target: fighter)
-                for (var userAlertsEntry : userAlerts.entrySet()) {
-                    User user = userAlertsEntry.getKey();
-                    String fcmToken = user.getFcmToken();
-                    if (fcmToken == null || fcmToken.isBlank()) {
-                        continue;
-                    }
-                    // event에 포함된 fighters 중 user가 알림 설정한 fighters 로 filtering
-                    List<String> userAlertedFighterNames = userAlertsEntry.getValue().stream()
-                            .map(alert -> fighterNameMap.get(alert.getTargetId()))
-                            .toList();
-                    if (!userAlertedFighterNames.isEmpty()) {
-                        log.info("send notification to {}, fighters = {}", user.getNickname(), userAlertedFighterNames);
-                        messages.add(buildFcmMessage(userAlertedFighterNames, eventName, user.getFcmToken()));
-                    }
+            List<Alert> alerts = alertRepository.findByAlertTargetAndTargetIdIn(AlertTarget.FIGHTER, fighterIds);
+            Map<User, List<Alert>> userAlerts = alerts.stream()
+                    .collect(Collectors.groupingBy(Alert::getUser));
+            // user : List<Alert> (target: fighter)
+            for (var userAlertsEntry : userAlerts.entrySet()) {
+                User user = userAlertsEntry.getKey();
+                String fcmToken = user.getFcmToken();
+                if (fcmToken == null || fcmToken.isBlank()) {
+                    continue;
                 }
-                fcmMessageService.sendEach(messages);
+                // event에 포함된 fighters 중 user가 알림 설정한 fighters 로 filtering
+                List<String> userAlertedFighterNames = userAlertsEntry.getValue().stream()
+                        .map(alert -> fighterNameMap.get(alert.getTargetId()))
+                        .toList();
+                if (!userAlertedFighterNames.isEmpty()) {
+                    log.info("send notification to {}, fighters = {}", user.getNickname(), userAlertedFighterNames);
+                    messages.add(buildFcmMessage(userAlertedFighterNames, eventName, user.getFcmToken()));
+                }
             }
+            fcmMessageService.sendEach(messages);
         }
+//        }
     }
 
     private static Map<Long, String> getFighterNameMapFromCurrentEvent(CurrentEventDto streamFightEvent) {

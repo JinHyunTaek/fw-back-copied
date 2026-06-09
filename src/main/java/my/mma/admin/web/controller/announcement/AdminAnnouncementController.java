@@ -1,8 +1,8 @@
 package my.mma.admin.web.controller.announcement;
 
 import lombok.RequiredArgsConstructor;
-import my.mma.admin.web.dto.announcement.AnnouncementDetailDto;
-import my.mma.admin.web.dto.announcement.AnnouncementRequest;
+import my.mma.api.announcement.dto.AdminAnnouncementDetailDto;
+import my.mma.api.announcement.dto.AdminAnnouncementRequest;
 import my.mma.api.announcement.service.AnnouncementService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -35,13 +35,13 @@ public class AdminAnnouncementController {
 
     @GetMapping("/saveForm")
     public String saveForm(Model model) {
-        model.addAttribute("form", new AnnouncementRequest(null, null, false));
+        model.addAttribute("form", new AdminAnnouncementRequest(null, null, false));
         return "admin/announcement/saveForm";
     }
 
     @PostMapping("")
     public String save(
-            @Validated @ModelAttribute("form") AnnouncementRequest request,
+            @Validated @ModelAttribute("form") AdminAnnouncementRequest request,
             BindingResult bindingResult,
             Model model
     ) {
@@ -55,13 +55,13 @@ public class AdminAnnouncementController {
 
     @PostMapping("/{id}")
     public String update(
-            @PathVariable("id") Long id,
-            @Validated @ModelAttribute("form") AnnouncementRequest updateRequest,
+            @PathVariable Long id,
+            @Validated @ModelAttribute("form") AdminAnnouncementRequest updateRequest,
             BindingResult bindingResult,
             Model model
     ) {
         if (bindingResult.hasErrors()) {
-            AnnouncementDetailDto detail = announcementService.detail(id);
+            AdminAnnouncementDetailDto detail = announcementService.detail(id);
             model.addAttribute("announcementId", detail.id());
             // 요청 값 유지
             model.addAttribute("form", updateRequest);
@@ -73,12 +73,12 @@ public class AdminAnnouncementController {
 
     @GetMapping("/{id}")
     public String detail(
-            @PathVariable("id") Long id,
+            @PathVariable Long id,
             Model model
     ) {
-        AnnouncementDetailDto detail = announcementService.detail(id);
+        AdminAnnouncementDetailDto detail = announcementService.detail(id);
         model.addAttribute("announcementId", detail.id());
-        model.addAttribute("form", new AnnouncementRequest(
+        model.addAttribute("form", new AdminAnnouncementRequest(
                 detail.title(),
                 detail.content(),
                 detail.pinned()
@@ -88,7 +88,7 @@ public class AdminAnnouncementController {
 
     @DeleteMapping("/{id}")
     public String delete(
-            @PathVariable("id") Long id
+            @PathVariable Long id
     ) {
         announcementService.delete(id);
         return "redirect:/htj-admin/announcement/announcements";

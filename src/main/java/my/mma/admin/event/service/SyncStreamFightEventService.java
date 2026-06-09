@@ -20,7 +20,7 @@ public class SyncStreamFightEventService {
         flaskSyncEventService.syncFightEvents();
         if (handleBets) {
             betPointHandler.handleUserBets(eventId);
-            currentFightEventNotificationService.sendBetSettlementNotification(eventId);
+//            currentFightEventNotificationService.sendBetSettlementNotification(eventId);
         }
         saveStreamFightEventService.syncStreamFightEvent();
         currentFightEventNotificationService.initializeTaskScheduler();

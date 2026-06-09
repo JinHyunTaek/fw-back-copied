@@ -6,6 +6,7 @@ import my.mma.admin.event.dto.CrawledPrevEvent;
 import my.mma.admin.event.dto.CrawledUpcomingEvent;
 import my.mma.admin.event.dto.CrawledUpcomingEvent.EventCrawlerDto;
 import my.mma.api.exception.CustomException;
+import my.mma.api.fighter.entity.CareerStats;
 import my.mma.api.fighter.entity.Fighter;
 import my.mma.api.fighter.repository.FighterRepository;
 import my.mma.api.fightevent.entity.FightEvent;
@@ -172,6 +173,7 @@ public class FlaskEventService {
                 if (!existing.getFightRecord().equals(toFightRecord(dto.record().split("-")))) {
                     existing.updateFightRecord(dto.record().split("-"));
                 }
+                existing.updateCareerStats(CareerStats.of(dto.careerStats()));
             } else {
                 Fighter savedFighter = fighterRepository.save(dto.toEntity());
                 crawledFighterNameMap.put(savedFighter.getName(), savedFighter);

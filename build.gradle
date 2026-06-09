@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.3.3'
+	id 'org.springframework.boot' version '3.5.3'
 	id 'io.spring.dependency-management' version '1.1.6'
 }
 
@@ -59,6 +59,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator' //actuator 추가
 	implementation 'io.micrometer:micrometer-registry-prometheus' // 메트릭을 프로메테우스 포멧으로 변환
 	implementation 'org.flywaydb:flyway-mysql'
+	implementation platform("org.springframework.ai:spring-ai-bom:1.0.0")
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'

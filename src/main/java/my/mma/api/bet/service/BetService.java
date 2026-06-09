@@ -71,7 +71,8 @@ public class BetService {
             throw new CustomException(ErrorCode.INVALID_SEEDPOINT_400);
         if (user.getPoint() < betRequest.seedPoint())
             throw new CustomException(ErrorCode.LOW_USER_POINT_400);
-        if (betCardRepository.countByUserIdAndFightEventId(user.getId(), currentEvent.getId()) >= BET_AVAILABLE_COUNT) {
+        if (betCardRepository.countByUserIdAndFightEventId(user.getId(), currentEvent.getId())
+                + betRequest.singleBetCards().size() > BET_AVAILABLE_COUNT) {
             throw new CustomException(ErrorCode.BET_LIMIT_EXCEED_403);
         }
 
@@ -161,6 +162,9 @@ public class BetService {
     private LocalDateTime getCurrentEventStartDateTime(CurrentEventDto currentEvent) {
         CardStartDateTimeInfoDto startDateTimeInfoDto = currentEvent.getEarlyCardDateTimeInfo() != null ? currentEvent.getEarlyCardDateTimeInfo()
                 : currentEvent.getPrelimCardDateTimeInfo();
+        if(startDateTimeInfoDto == null) {
+            startDateTimeInfoDto = currentEvent.getMainCardDateTimeInfo();
+        }
         if (startDateTimeInfoDto == null) {
             return null;
         }

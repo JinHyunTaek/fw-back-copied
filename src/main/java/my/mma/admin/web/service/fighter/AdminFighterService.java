@@ -13,7 +13,11 @@ import my.mma.api.fighter.dto.RankersPerCategory.RankingCategory;
 import my.mma.api.fighter.entity.FightRecord;
 import my.mma.api.fighter.entity.Fighter;
 import my.mma.api.fighter.repository.FighterRepository;
+import my.mma.api.fightevent.dto.CurrentEventDto;
+import my.mma.api.fightevent.dto.CurrentEventDto.CurrentFighterFightEventDto;
+import my.mma.api.fightevent.store.CurrentEventStore;
 import my.mma.api.global.logaop.Loggable;
+import my.mma.api.global.redis.key.RedisKey;
 import my.mma.api.global.redis.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -22,6 +26,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -42,11 +48,13 @@ public class AdminFighterService {
     private final WebClient webClient;
     private final FighterRepository fighterRepository;
     private final RedisUtils<RankersPerCategory> rankerRedisUtils;
+    private final CurrentEventStore currentEventStore;
 
     public AdminFighterService(
             @Value("${flask.uri}") String flaskUrl,
             FighterRepository fighterRepository,
-            RedisUtils<RankersPerCategory> rankers
+            RedisUtils<RankersPerCategory> rankers,
+            CurrentEventStore currentEventStore
     ) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
@@ -57,6 +65,7 @@ public class AdminFighterService {
                 .build();
         this.fighterRepository = fighterRepository;
         this.rankerRedisUtils = rankers;
+        this.currentEventStore = currentEventStore;
     }
 
     public Page<FighterDto> search(String name, Pageable pageable) {
@@ -93,7 +102,7 @@ public class AdminFighterService {
             rankersDto.rankers().forEach(
                     rankerDto -> {
                         Fighter fighter = fighterMap.get(rankerDto.getName());
-                        if(fighter != null) {
+                        if (fighter != null) {
                             if (!rankerDto.getCategory().name().contains("POUND_FOR_POUND"))
                                 fighter.updateRanking(rankerDto.getRanking());
                             rankerDto.updateFromFighter(fighter);
@@ -103,8 +112,8 @@ public class AdminFighterService {
                                 rankerDtos = new ArrayList<>();
                             rankerDtos.add(rankerDto);
                             rankersPerCategory.put(rankerDto.getCategory(), rankerDtos);
-                        }else{
-                            log.error("cannot find ranker name={}",rankerDto.getName());
+                        } else {
+                            log.error("cannot find ranker name={}", rankerDto.getName());
                         }
                     }
             );
@@ -150,5 +159,29 @@ public class AdminFighterService {
                 request.birthday(),
                 request.nationality()
         );
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                syncCurrentEventCache(fighter);
+            }
+        });
+    }
+
+    private void syncCurrentEventCache(Fighter fighter) {
+        currentEventStore.mutate(event -> {
+            boolean changed = false;
+            for (CurrentFighterFightEventDto ffe : event.getFighterFightEvents()) {
+                if (fighter.getId().equals(ffe.getWinner().getId())) {   // ← NPE 방어
+                    ffe.updateFighterInfo(fighter, true);
+                    changed = true;
+                } else if (fighter.getId().equals(ffe.getLoser().getId())) {
+                    ffe.updateFighterInfo(fighter, false);
+                    changed = true;
+                }
+                if (changed)
+                    break;
+            }
+            return changed ? event : null;
+        });
     }
 }

@@ -46,7 +46,7 @@ public class NameGameService implements GameService<NameGameResponse>{
         return nameQuestions;
     }
 
-    public NameGameResponse generateNameQuestion(NameGameCategory category, Set<FighterNamePair> names) {
+    NameGameResponse generateNameQuestion(NameGameCategory category, Set<FighterNamePair> names) {
         return switch (category) {
 //            case HEADSHOT -> generateHeadshotQuestion(new ArrayList<>(names));
 //            case BODY -> generateBodyQuestion(new ArrayList<>(names));
@@ -164,6 +164,5 @@ public class NameGameService implements GameService<NameGameResponse>{
         }
         throw new CustomException(ErrorCode.SERVER_ERROR_500, "nickname question generation error");
     }
-
 
 }

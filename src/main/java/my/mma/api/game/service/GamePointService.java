@@ -13,8 +13,6 @@ import my.mma.api.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Transactional(readOnly = true)
@@ -29,7 +27,7 @@ public class GamePointService {
     public void updateGameAttemptCount(String email, boolean isSubtract) {
         User user = extractUserByEmail(email);
         GameAttempt gameAttempt = gameAttemptRepository.findById(user.getId()).orElseThrow(
-                () -> new CustomException(ErrorCode.NO_SUCH_EVENT_FOUND_400)
+                () -> new CustomException(ErrorCode.NO_SUCH_USER_FOUND_400)
         );
         if (isSubtract) {
             if (gameAttempt.getCount() == 0)
@@ -57,16 +55,11 @@ public class GamePointService {
     public GameAttemptResponse getGameAttemptCount(String email) {
         User user = extractUserByEmail(email);
         GameAttempt gameAttempt = gameAttemptRepository.findById(user.getId()).orElseGet(
-                () ->
-                        gameAttemptRepository.save(GameAttempt.builder()
-                                .userId(user.getId())
-                                .count(10)
-                                .adCount(5)
-                                .expiration(Duration.between(
-                                        LocalDateTime.now(),
-                                        LocalDate.now().plusDays(1).atStartOfDay()).getSeconds()
-                                ).build())
-        );
+                () -> {
+                    GameAttempt created = GameAttempt.of(user.getId(), LocalDateTime.now());
+                    gameAttemptRepository.save(created);
+                    return created;
+                });
         return GameAttemptResponse.builder()
                 .count(gameAttempt.getCount())
                 .adCount(gameAttempt.getAdCount())

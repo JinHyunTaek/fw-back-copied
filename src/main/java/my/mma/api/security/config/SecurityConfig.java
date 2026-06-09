@@ -79,7 +79,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests(registry ->
                 registry.requestMatchers("/user", "/reissue", "/auth/social_login",
                                 "/smtp/**", "/user/dup_nickname", "/user/password-reset",
-                                "/ws/**", "/css/**","/htj-admin/login","/app-status"
+                                "/ws/**", "/css/**","/htj-admin/login","/app-status",
+                                "/stream/ai/**" // [TEST] LLM 테스트 페이지/스트리밍. 운영 전 인증으로 보호 필요
                                 // [FIX Bug24] /actuator/** 를 permitAll에서 제거.
                                 // actuator 엔드포인트는 내부망 또는 별도 인증으로 보호해야 함.
                                 // 필요 시 application.yml의 management.endpoints.web.exposure.include 로 노출 범위 제한.

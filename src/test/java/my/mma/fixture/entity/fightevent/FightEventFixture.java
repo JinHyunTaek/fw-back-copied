@@ -84,20 +84,21 @@ public class FightEventFixture {
         }
 
         public FightEvent build() {
+            LocalDateTime baseDt = early != null ? early : (prelim != null ? prelim : main);
 
             FightEvent fightEvent = FightEvent.builder()
                     .id(id)
                     .name("UFC-" + id)
-                    .eventDate(early.toLocalDate())
+                    .eventDate(baseDt.toLocalDate())
                     .displayDate(displayDate)
                     .completed(completed)
                     .location("location-" + id)
-                    .mainCardCnt(TOTAL_CARD_COUNT / 2)
-                    .mainCardDateTimeInfo(toCardStartDateTimeInfo(main))
-                    .prelimCardCnt(TOTAL_CARD_COUNT / 3)
-                    .prelimCardDateTimeInfo(toCardStartDateTimeInfo(prelim))
-                    .earlyCardCnt(TOTAL_CARD_COUNT / 6)
-                    .earlyCardDateTimeInfo(toCardStartDateTimeInfo(early))
+                    .mainCardCnt(main != null ? TOTAL_CARD_COUNT / 2 : null)
+                    .mainCardDateTimeInfo(main != null ? toCardStartDateTimeInfo(main) : null)
+                    .prelimCardCnt(prelim != null ? TOTAL_CARD_COUNT / 3 : null)
+                    .prelimCardDateTimeInfo(prelim != null ? toCardStartDateTimeInfo(prelim) : null)
+                    .earlyCardCnt(early != null ? TOTAL_CARD_COUNT / 6 : null)
+                    .earlyCardDateTimeInfo(early != null ? toCardStartDateTimeInfo(early) : null)
                     .build();
 
             if (withFFEs) {
