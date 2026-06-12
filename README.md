@@ -4,10 +4,11 @@
 > 경기 일정·선수 정보 조회부터 경기 예측, 실시간 채팅, AI 경기 분석까지 한 곳에서 제공합니다.
 
 [![App Store](https://img.shields.io/badge/App_Store-출시-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/kr/app/id6764522768)
-[![Google Play](https://img.shields.io/badge/Google_Play-비공개_테스트-414141?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.ht.fightweek)
+[![Google Play](https://img.shields.io/badge/Google_Play-출시-00C853?logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=com.ht.fightweek)
 
 - 🌐 서비스: https://fightweek.kr
 - 📱 App Store: https://apps.apple.com/kr/app/id6764522768
+- 🤖 Google Play: https://play.google.com/store/apps/details?id=com.ht.fightweek
 - ▶️ 소개 영상: https://www.youtube.com/watch?v=IMDCsDtsfMc
 
 ---
