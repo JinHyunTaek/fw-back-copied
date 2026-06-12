@@ -49,5 +49,5 @@ etc
 .env
 nginx.conf
 .claude
-CLAUDE.md
+CLAUDE_RESUME.md
 spy.log
