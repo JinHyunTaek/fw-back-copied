@@ -38,7 +38,6 @@
 | **AI** | Spring AI (OpenAI) |
 | **Push / Mail** | Firebase Admin (FCM), Spring Mail (SMTP) |
 | **Cloud** | AWS S3, CloudFront, ECR, EC2 |
-| **Data Ingestion** | Jsoup (크롤링), Google Sheets API |
 | **Observability** | Spring Actuator, Micrometer, Prometheus, Grafana |
 | **View (Admin)** | Thymeleaf |
 | **Infra** | Docker, GitHub Actions, Nginx |
