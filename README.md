@@ -15,7 +15,8 @@
 ## 목차
 
 - [기술 스택](#기술-스택)
-- [아키텍처](#아키텍처)
+- [서비스 아키텍처](#서비스-아키텍처)
+- [애플리케이션 구조](#애플리케이션-구조)
 - [주요 기능](#주요-기능)
 - [패키지 구조](#패키지-구조)
 - [인프라 & 배포](#인프라--배포)
@@ -44,7 +45,58 @@
 
 ---
 
-## 아키텍처
+## 서비스 아키텍처
+
+운영 환경은 **API 서버**와 **모니터링 서버**를 별도 EC2로 분리해, 모니터링 부하가 서비스에 영향을 주지 않도록 구성했습니다.
+공개 트래픽은 모니터링 서버의 Nginx(Reverse Proxy)를 통해 API 서버로 전달되며, Prometheus가 각 Exporter와 애플리케이션 메트릭을 수집해 Grafana로 시각화합니다.
+
+```mermaid
+flowchart LR
+    User([User · Mobile App])
+    Admin([Admin])
+
+    subgraph AWS["AWS Cloud"]
+        subgraph VPC["VPC"]
+            subgraph EC2B["EC2 · 모니터링 서버 (Docker)"]
+                Nginx["Nginx<br/>Reverse Proxy · SSL"]
+                Prom["Prometheus"]
+                Graf["Grafana"]
+                Flask["Flask Crawler"]
+            end
+            subgraph EC2A["EC2 · API 서버 (Docker)"]
+                Spring["Spring Boot<br/>REST API · WebSocket · Thymeleaf<br/>:8080 / :9091"]
+                Redis[("Redis")]
+                RedisExp["redis-exporter"]
+                NodeExp["node-exporter"]
+            end
+        end
+        RDS[("RDS · MySQL")]
+        S3["S3"]
+        CF["CloudFront"]
+    end
+
+    User -- "HTTP / WebSocket" --> Nginx
+    Admin -- "HTTP (대시보드)" --> Nginx
+    Nginx -- "proxy" --> Spring
+    Spring --> RDS
+    Spring --> Redis
+    Spring -- "이미지 업로드" --> S3
+    Spring -- "캐시 무효화" --> CF
+    User -- "이미지 조회" --> CF
+    CF -- "origin" --> S3
+    Flask -- "경기·선수 데이터 수집" --> Spring
+
+    Prom -- "scrape" --> NodeExp
+    Prom -- "scrape" --> RedisExp
+    Prom -- "scrape (actuator)" --> Spring
+    Graf --> Prom
+```
+
+배포는 `master` push 시 GitHub Actions가 빌드 → ECR 푸시 → EC2 SSH 배포까지 자동 수행합니다. 자세한 내용은 [인프라 & 배포](#인프라--배포)를 참고하세요.
+
+---
+
+## 애플리케이션 구조
 
 애플리케이션은 **사용자용 API**와 **운영용 Admin**을 패키지 레벨에서 분리하고,
 공통 관심사(인증·캐시·외부 연동 등)는 `api/global`에 응집시켰습니다.
@@ -160,6 +212,9 @@ GitHub push (master)
 - **Redis Exporter** — Redis 메모리 사용량·연결 수
 - **Micrometer Gauge** — WebSocket 동시 접속자 수 등 비즈니스 메트릭
 - **Prometheus + Grafana** — 위 지표를 수집·시각화하여 JVM·Redis·EC2·실시간 접속자를 한 화면에서 관찰
+- **Slack 알림** — Grafana Alerting이 Prometheus 메트릭 임계치를 평가해 Slack 채널로 경보 발송
+  - JVM 힙 사용률 **80% 초과**
+  - DB 커넥션 풀(HikariCP, max 8) **임계치 도달**
 
 ---
 
