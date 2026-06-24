@@ -10,6 +10,7 @@ import my.mma.api.fightevent.entity.FighterFightEvent;
 import my.mma.api.fighter.entity.Fighter;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 
 import static my.mma.api.fightevent.dto.CurrentEventDto.*;
 import static my.mma.api.fightevent.dto.StreamFighterFightEventStatus.*;
@@ -37,6 +38,7 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
                 .location(fightEvent.getLocation())
                 .fighterFightEvents(fightEvent.getFighterFightEvents().stream()
                         .filter(ffe -> !ffe.isCanceled())
+                        .sorted(Comparator.comparingInt(FighterFightEvent::getCardOrder))
                         .map(ffe -> CurrentFighterFightEventDto.toDto(ffe, UPCOMING))
                         .toList())
                 .build();

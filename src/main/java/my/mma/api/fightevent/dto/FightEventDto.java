@@ -9,6 +9,7 @@ import my.mma.api.fightevent.dto.abs.IFightEventDto;
 import my.mma.api.fightevent.entity.FightEvent;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -43,9 +44,11 @@ public class FightEventDto extends IFightEventDto<FightEventDto.FighterFightEven
                 .location(fightEvent.getLocation())
                 .name(fightEvent.getName())
                 .upcoming(!fightEvent.isCompleted())
-                .fighterFightEvents(fightEvent.getFighterFightEvents().stream().map(
-                        FightEventDto.FighterFightEventDto::toDto
-                ).collect(Collectors.toList()))
+                .fighterFightEvents(fightEvent.getFighterFightEvents().stream()
+                        .sorted(Comparator.comparingInt(FighterFightEvent::getCardOrder))
+                        .map(
+                                FightEventDto.FighterFightEventDto::toDto
+                        ).collect(Collectors.toList()))
                 .build();
     }
 

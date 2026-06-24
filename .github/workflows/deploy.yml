@@ -1,10 +1,18 @@
-name: deploy-ec2-prod
+name: deploy-ec2-prod (new)
+
+# 기존 deploy.yml 과의 차이점만 정리:
+#  1) 도커 이미지를 :latest 뿐 아니라 커밋 SHA(:${{ github.sha }}) 로도 태깅/push  → 롤백 좌표 확보
+#  2) EC2 배포 시 deploy-spring.sh 에 커밋 SHA 를 인자로 전달            → "이 버전을 배포/기억하라"
+# 검증 후 이 파일 내용을 deploy.yml 로 옮기고 이 파일은 삭제하면 됩니다.
 
 on:
   push:
     branches:
       - master
   workflow_dispatch:
+
+env:
+  ECR_IMAGE: 648232846728.dkr.ecr.ap-northeast-2.amazonaws.com/mma-server
 
 jobs:
   build-and-deploy:
@@ -50,14 +58,16 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Docker build & push
+      # Docker build & push  (SHA 태그 + latest 둘 다)
       - name: Build and Push Docker Image
         run: |
           docker build -t mma-server .
-          docker tag mma-server:latest 648232846728.dkr.ecr.ap-northeast-2.amazonaws.com/mma-server:latest
-          docker push 648232846728.dkr.ecr.ap-northeast-2.amazonaws.com/mma-server:latest
+          docker tag mma-server:latest ${{ env.ECR_IMAGE }}:${{ github.sha }}
+          docker tag mma-server:latest ${{ env.ECR_IMAGE }}:latest
+          docker push ${{ env.ECR_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.ECR_IMAGE }}:latest
 
-      # EC2 접속해서 배포
+      # EC2 접속해서 배포 (커밋 SHA 를 인자로 전달)
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3 # EC2로 SSH 접속
         with:
@@ -66,4 +76,4 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/mma-server
-            ./deploy-spring.sh
+            ./deploy-spring.sh ${{ github.sha }}
