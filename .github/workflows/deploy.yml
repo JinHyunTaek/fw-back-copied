@@ -1,10 +1,5 @@
 name: deploy-ec2-prod (new)
 
-# 기존 deploy.yml 과의 차이점만 정리:
-#  1) 도커 이미지를 :latest 뿐 아니라 커밋 SHA(:${{ github.sha }}) 로도 태깅/push  → 롤백 좌표 확보
-#  2) EC2 배포 시 deploy-spring.sh 에 커밋 SHA 를 인자로 전달            → "이 버전을 배포/기억하라"
-# 검증 후 이 파일 내용을 deploy.yml 로 옮기고 이 파일은 삭제하면 됩니다.
-
 on:
   push:
     branches:
