@@ -37,7 +37,6 @@ dependencies {
 
 	implementation platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.2.0")
 	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.767'
 	implementation 'software.amazon.awssdk:cloudfront'
 
 	implementation 'com.google.api-client:google-api-client:2.7.2'
@@ -68,6 +67,7 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
+	testImplementation 'com.icegreen:greenmail-junit5:2.0.1' // 페이크 SMTP: 기프티콘 메일(인라인 이미지) 검증
 }
 
 tasks.named('test') {
@@ -80,4 +80,6 @@ configurations.configureEach {
 		// Netty 안전한 최신 버전으로 강제 적용
 		force 'io.netty:netty-codec-http:4.1.115.Final'
 	}
+	// httpclient(Firebase·Google·AWS v2)가 끌어오는 commons-logging 제거 → spring-jcl과 충돌 방지
+	exclude group: 'commons-logging', module: 'commons-logging'
 }

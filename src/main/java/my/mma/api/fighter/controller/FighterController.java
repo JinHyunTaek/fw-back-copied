@@ -8,6 +8,7 @@ import my.mma.api.fighter.dto.FighterRatingRequest;
 import my.mma.api.fightevent.dto.FightEventDto.FighterFightEventDto;
 import my.mma.api.fighter.dto.FighterDetailDto;
 import my.mma.api.fighter.service.FighterService;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.security.CustomUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 public class FighterController {
 
     private final FighterService fighterService;
+    private final S3ImgService s3Service;
 
     @GetMapping("/{fighterId}")
     public ResponseEntity<FighterDetailDto> detail(
@@ -71,24 +73,24 @@ public class FighterController {
         return ResponseEntity.ok().body(null);
     }
 
-//    @GetMapping("/headshot")
-//    public ResponseEntity<Map<String, String>> headshotUrl(
-//            @RequestParam("name") String name
-//    ) {
-//        String preSignedUrl = s3Service.generateFighterHeadshotUrl(name);
-//        Map<String, String> map = new HashMap<>();
-//        map.put("url", preSignedUrl);
-//        return ResponseEntity.ok().body(map);
-//    }
-//
-//    @GetMapping("/body")
-//    public ResponseEntity<Map<String, String>> bodyUrl(
-//            @RequestParam("name") String name
-//    ) {
-//        String preSignedUrl = s3Service.generateFighterBodyUrl(name);
-//        Map<String, String> map = new HashMap<>();
-//        map.put("url", preSignedUrl);
-//        return ResponseEntity.ok().body(map);
-//    }
+    // [레거시] 이름으로 단건 조회. 현재 클라이언트는 DTO에 포함된 headshotUrl/bodyUrl을 사용.
+    // 이미지가 없는 선수(약 90%)는 url=null 반환 → 클라이언트가 실루엣 처리.
+    @GetMapping("/headshot")
+    public ResponseEntity<Map<String, String>> headshotUrl(
+            @RequestParam("name") String name
+    ) {
+        Map<String, String> map = new HashMap<>();
+        map.put("url", s3Service.generateFighterHeadshotUrlOrNull(name));
+        return ResponseEntity.ok().body(map);
+    }
+
+    @GetMapping("/body")
+    public ResponseEntity<Map<String, String>> bodyUrl(
+            @RequestParam("name") String name
+    ) {
+        Map<String, String> map = new HashMap<>();
+        map.put("url", s3Service.generateFighterBodyUrlOrNull(name));
+        return ResponseEntity.ok().body(map);
+    }
 
 }

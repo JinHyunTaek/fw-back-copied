@@ -14,6 +14,7 @@ import my.mma.api.fightevent.entity.FightEvent;
 import my.mma.api.fightevent.entity.FighterFightEvent;
 import my.mma.api.fightevent.repository.FightEventRepository;
 import my.mma.api.fightevent.repository.FighterFightEventRepository;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.user.entity.User;
 import my.mma.api.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class FightEventService {
     private final FighterFightEventRepository fighterFightEventRepository;
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final S3ImgService s3Service;
 
     public List<Integer> getEventDaysFromYearMonth(int year, int month){
         YearMonth ym = YearMonth.of(year, month);
@@ -57,16 +59,16 @@ public class FightEventService {
                     if (fightEventDto.isUpcoming()) {
                         fightEventDto.setAlert(alertRepository.existsByUserAndAlertTargetAndTargetId(user, AlertTarget.UPCOMING_EVENT, fightEvent.getId()));
                     }
-//                    fightEventDto.getFighterFightEvents().forEach(
-//                            fighterFightEventDto -> {
-//                                fighterFightEventDto.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(
-//                                        fighterFightEventDto.getWinner().getName()
-//                                ));
-//                                fighterFightEventDto.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(
-//                                        fighterFightEventDto.getLoser().getName()
-//                                ));
-//                            }
-//                    );
+                    fightEventDto.getFighterFightEvents().forEach(
+                            fighterFightEventDto -> {
+                                fighterFightEventDto.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(
+                                        fighterFightEventDto.getWinner().getName()
+                                ));
+                                fighterFightEventDto.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(
+                                        fighterFightEventDto.getLoser().getName()
+                                ));
+                            }
+                    );
                     return fightEventDto;
                 }
         ).toList();
@@ -83,11 +85,10 @@ public class FightEventService {
 
     public FighterFightEventDto getMainCardDto(FightEvent fightEvent) {
         FighterFightEvent mainFight = fightEvent.getFighterFightEvents().getFirst();
-        return FighterFightEventDto.toDto(mainFight);
-        //        String winnerHeadshotUrl = s3Service.generateFighterHeadshotUrl(mainFight.getWinner().getName());
-//        String loserHeadshotUrl = s3Service.generateFighterHeadshotUrl(mainFight.getLoser().getName());
-//        mainCardDto.getWinner().setHeadshotUrl(winnerHeadshotUrl);
-//        mainCardDto.getLoser().setHeadshotUrl(loserHeadshotUrl);
+        FighterFightEventDto mainCardDto = FighterFightEventDto.toDto(mainFight);
+        mainCardDto.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(mainFight.getWinner().getName()));
+        mainCardDto.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(mainFight.getLoser().getName()));
+        return mainCardDto;
     }
 
     public FighterFightEventCardDetailDto cardDetail(Long ffeId) {
@@ -95,12 +96,10 @@ public class FightEventService {
                 .orElseThrow(() -> new CustomException(BAD_REQUEST_400));
         Fighter winner = ffe.getWinner();
         Fighter loser = ffe.getLoser();
-//        String winnerBodyUrl = s3Service.generateFighterBodyUrl(winner.getName());
-//        String loserBodyUrl = s3Service.generateFighterBodyUrl(loser.getName());
         FighterFightEventCardFighterDto winnerCardDto = FighterFightEventCardFighterDto.of(winner);
         FighterFightEventCardFighterDto loserCardDto = FighterFightEventCardFighterDto.of(loser);
-//        winnerCardDto.setBodyUrl(winnerBodyUrl);
-//        loserCardDto.setBodyUrl(loserBodyUrl);
+        winnerCardDto.setBodyUrl(s3Service.generateFighterBodyUrlOrNull(winner.getName()));
+        loserCardDto.setBodyUrl(s3Service.generateFighterBodyUrlOrNull(loser.getName()));
         return new FighterFightEventCardDetailDto(winnerCardDto, loserCardDto, ffe.getFightWeight().getDisplayName());
     }
 }

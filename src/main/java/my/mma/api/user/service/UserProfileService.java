@@ -13,6 +13,7 @@ import my.mma.api.fighter.repository.FighterRepository;
 import my.mma.api.fightevent.dto.FightEventDto;
 import my.mma.api.fightevent.repository.FightEventRepository;
 import my.mma.api.fightevent.service.FightEventService;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.user.dto.UserBetRecord;
 import my.mma.api.user.dto.UserProfileDto;
 import my.mma.api.user.entity.User;
@@ -34,6 +35,7 @@ public class UserProfileService {
     private final FighterRepository fighterRepository;
     private final FightEventRepository fightEventRepository;
     private final FightEventService eventService;
+    private final S3ImgService s3Service;
 
     public UserProfileDto profile(String email) {
         User user = userRepository.findByEmail(email)
@@ -57,9 +59,12 @@ public class UserProfileService {
                 .filter(alert -> alert.getAlertTarget().equals(AlertTarget.FIGHTER))
                 .map(Alert::getTargetId)
                 .toList();
-        //                    fighterDto.setHeadshotUrl(s3Service.generateFighterHeadshotUrl(fighter.getName()));
         return fighterRepository.findAllById(fighterIds)
-                .stream().map(FighterDto::toDto).toList();
+                .stream().map(fighter -> {
+                    FighterDto dto = FighterDto.toDto(fighter);
+                    dto.setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(fighter.getName()));
+                    return dto;
+                }).toList();
     }
 
     private List<FightEventDto.FighterFightEventDto> getAlertEvents(List<Alert> userAlerts) {

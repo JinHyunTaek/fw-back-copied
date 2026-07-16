@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Promotions</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- 사이드바 -->
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <!-- 메인 -->
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🎁 프로모션 관리</h2>
+                <a class="btn btn-primary"
+                   th:href="@{/htj-admin/promotion/saveForm}">
+                    프로모션 등록
+                </a>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>제목</th>
+                            <th>진행 기간</th>
+                            <th>당첨자 발표</th>
+                            <th>생성일</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="p : ${promotions.content}">
+                            <td th:text="${p.id()}"></td>
+                            <td th:text="${p.title()}"></td>
+                            <td>
+                                <span th:text="${#temporals.format(p.startDate(), 'yyyy-MM-dd')}"></span>
+                                ~
+                                <span th:text="${#temporals.format(p.endDate(), 'yyyy-MM-dd')}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(p.announceDate(), 'yyyy-MM-dd')}"></td>
+                            <td th:text="${#temporals.format(p.createdDate(), 'yyyy-MM-dd')}"></td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   th:href="@{/htj-admin/promotion/{id}(id=${p.id()})}">
+                                    상세
+                                </a>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${promotions.content.isEmpty()}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                등록된 프로모션이 없습니다.
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+            <!-- 페이징 -->
+            <nav class="mt-4" th:if="${promotions.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+
+                    <li class="page-item"
+                        th:classappend="${promotions.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/promotion(page=${promotions.number - 1}, size=${promotions.size})}">
+                            이전
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, promotions.totalPages - 1)}"
+                        th:classappend="${pageNum == promotions.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/promotion(page=${pageNum}, size=${promotions.size})}"
+                           th:text="${pageNum + 1}">
+                        </a>
+                    </li>
+
+                    <li class="page-item"
+                        th:classappend="${promotions.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/htj-admin/promotion(page=${promotions.number + 1}, size=${promotions.size})}">
+                            다음
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>

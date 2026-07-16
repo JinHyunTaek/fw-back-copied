@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Promotion Detail</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🎁 프로모션 상세</h2>
+                <div class="d-flex gap-2">
+                    <a th:if="${promotion.drawn()}"
+                       th:href="@{/htj-admin/promotion/{id}/winners(id=${promotion.id()})}"
+                       class="btn btn-info">🏆 당첨자 확인/발송</a>
+                    <!-- TODO(임시/E2E): 자정 크론 대기 없이 즉시 추첨. 배포 전 제거 -->
+                    <form th:unless="${promotion.drawn()}"
+                          th:action="@{/htj-admin/promotion/{id}/draw(id=${promotion.id()})}"
+                          method="post" class="m-0"
+                          onsubmit="return confirm('지금 추첨합니다. 잉여 기프티콘은 삭제되고 프로모션이 잠깁니다. 되돌릴 수 없습니다. 진행할까요?');">
+                        <button type="submit" class="btn btn-warning">⚡ 지금 추첨(임시)</button>
+                    </form>
+                    <a th:href="@{/htj-admin/promotion/{id}/editForm(id=${promotion.id()})}"
+                       class="btn btn-primary">수정</a>
+                    <form th:action="@{/htj-admin/promotion/{id}/delete(id=${promotion.id()})}"
+                          method="post" class="m-0"
+                          onsubmit="return confirm('정말 삭제하시겠습니까? 되돌릴 수 없습니다.');">
+                        <button type="submit" class="btn btn-danger">삭제</button>
+                    </form>
+                    <a th:href="@{/htj-admin/promotion}" class="btn btn-secondary">목록</a>
+                </div>
+            </div>
+
+            <!-- 처리 결과 메시지 (PRG flash) -->
+            <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
+            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+            <!-- ===== 기본 정보 ===== -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-bold">기본 정보</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">ID</dt>
+                        <dd class="col-sm-9" th:text="${promotion.id()}"></dd>
+
+                        <dt class="col-sm-3">제목</dt>
+                        <dd class="col-sm-9" th:text="${promotion.title()}"></dd>
+
+                        <dt class="col-sm-3">혜택</dt>
+                        <dd class="col-sm-9" th:text="${promotion.benefit()}"></dd>
+
+                        <dt class="col-sm-3">진행 기간</dt>
+                        <dd class="col-sm-9">
+                            <span th:text="${#temporals.format(promotion.startDate(), 'yyyy-MM-dd')}"></span>
+                            ~
+                            <span th:text="${#temporals.format(promotion.endDate(), 'yyyy-MM-dd')}"></span>
+                        </dd>
+
+                        <dt class="col-sm-3">당첨자 발표일</dt>
+                        <dd class="col-sm-9"
+                            th:text="${#temporals.format(promotion.announceDate(), 'yyyy-MM-dd')}"></dd>
+
+                        <dt class="col-sm-3">최대 당첨자 수</dt>
+                        <dd class="col-sm-9" th:text="${promotion.maxWinnerCount()}"></dd>
+
+                        <dt class="col-sm-3">생성일</dt>
+                        <dd class="col-sm-9"
+                            th:text="${#temporals.format(promotion.createdDate(), 'yyyy-MM-dd')}"></dd>
+
+                        <dt class="col-sm-3">유의사항</dt>
+                        <dd class="col-sm-9" style="white-space: pre-line"
+                            th:text="${promotion.notice()}"></dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- ===== 기프티콘 목록 ===== -->
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold">
+                    기프티콘
+                    <span class="badge bg-secondary ms-2"
+                          th:text="${promotion.gifticons().size()}"></span>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>순서</th>
+                            <th>상품명</th>
+                            <th>카테고리</th>
+                            <th>쿠폰번호</th>
+                            <th>유효기간</th>
+                            <th>이미지</th>
+                            <th>배정 여부</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="g : ${promotion.gifticons()}">
+                            <td th:text="${g.id()}"></td>
+                            <td th:text="${g.displayOrder()}"></td>
+                            <td th:text="${g.name()}"></td>
+                            <td th:text="${g.category()}"></td>
+                            <td th:text="${g.couponNumber()}"></td>
+                            <td th:text="${#temporals.format(g.expiryDate(), 'yyyy-MM-dd')}"></td>
+                            <td>
+                                <a th:if="${g.imageUrl()}" th:href="${g.imageUrl()}" target="_blank">
+                                    <img th:src="${g.imageUrl()}" alt="기프티콘 이미지"
+                                         class="img-thumbnail" style="max-width: 120px; max-height: 120px">
+                                </a>
+                                <span th:unless="${g.imageUrl()}" class="text-muted">없음</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success" th:if="${g.isAssigned()}">배정됨</span>
+                                <span class="badge bg-secondary" th:unless="${g.isAssigned()}">미배정</span>
+                            </td>
+                            <td>
+                                <!-- 배정된 기프티콘은 삭제 불가 -->
+                                <form th:unless="${g.isAssigned()}" method="post" class="m-0"
+                                      th:action="@{/htj-admin/promotion/{pid}/gifticon/{gid}/delete(pid=${promotion.id()}, gid=${g.id()})}"
+                                      onsubmit="return confirm('이 기프티콘을 삭제하시겠습니까? 최대 당첨자 수도 1 줄어듭니다.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">삭제</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${promotion.gifticons().isEmpty()}">
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                등록된 기프티콘이 없습니다.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ===== 기프티콘 추가 (단건) ===== -->
+                <div class="card-footer">
+                    <form th:action="@{/htj-admin/promotion/{id}/gifticon(id=${promotion.id()})}"
+                          method="post" enctype="multipart/form-data">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label mb-1">상품명</label>
+                                <input type="text" name="name" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-1">쿠폰번호</label>
+                                <input type="text" name="couponNumber" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-1">카테고리</label>
+                                <select name="category" class="form-select" required>
+                                    <option value="" disabled selected>선택</option>
+                                    <option th:each="c : ${T(my.mma.api.event.promotion.entity.GifticonCategory).values()}"
+                                            th:value="${c}" th:text="${c}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-1">유효기간</label>
+                                <input type="date" name="expiryDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-1">
+                                <label class="form-label mb-1">순서</label>
+                                <input type="number" name="displayOrder" min="1" value="1" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label mb-1">이미지</label>
+                                <input type="file" name="image" class="form-control" accept="image/*" required>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="submit" class="btn btn-primary w-100">추가</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-0 mt-2">
+                            ※ 기프티콘을 추가하면 최대 당첨자 수도 1 늘어납니다.
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>

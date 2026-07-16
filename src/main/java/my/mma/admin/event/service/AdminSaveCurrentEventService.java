@@ -12,6 +12,7 @@ import my.mma.api.fightevent.repository.FightEventRepository;
 import my.mma.api.fightevent.repository.FighterFightEventRepository;
 import my.mma.api.global.logaop.Loggable;
 import my.mma.api.global.redis.utils.RedisUtils;
+import my.mma.api.global.s3.service.S3ImgService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class AdminSaveCurrentEventService {
     private final FighterFightEventRepository fighterFightEventRepository;
     private final RedisUtils<CurrentEventDto> redisUtils;
     private final FightPickCountRepository fightPickCountRepository;
+    private final S3ImgService s3Service;
 
     /**
      * case 1. 같은 currentEvent를 갱신 (카드 내용이 달라질 수도 있음)
@@ -62,10 +64,10 @@ public class AdminSaveCurrentEventService {
                             currFfe.setLastFighterBetCount(existingCard.getLastFighterBetCount());
                         }
                     }
-//                    currFfe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(currFfe.getWinner().getName()));
-//                    currFfe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(currFfe.getLoser().getName()));
-//                    currFfe.getWinner().setBodyUrl(s3Service.generateFighterBodyUrl(currFfe.getWinner().getName()));
-//                    currFfe.getLoser().setBodyUrl(s3Service.generateFighterBodyUrl(currFfe.getLoser().getName()));
+                    currFfe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(currFfe.getWinner().getName()));
+                    currFfe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(currFfe.getLoser().getName()));
+                    currFfe.getWinner().setBodyUrl(s3Service.generateFighterBodyUrlOrNull(currFfe.getWinner().getName()));
+                    currFfe.getLoser().setBodyUrl(s3Service.generateFighterBodyUrlOrNull(currFfe.getLoser().getName()));
                 }
         );
         redisUtils.saveData(CURRENT_EVENT.getKey(), built);

@@ -57,6 +57,8 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
 
         private int lastFighterBetCount;
 
+        private boolean winnerChanged;
+
         // for streaming (upcoming) event -> result is null
         public static CurrentFighterFightEventDto toDto(FighterFightEvent ffe, StreamFighterFightEventStatus status) {
             return CurrentFighterFightEventDto.builder()
@@ -68,6 +70,7 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
                     .loser(FighterFightEventCardFighterDto.of(ffe.getLoser()))
                     .result(null)
                     .title(ffe.isTitle())
+                    .winnerChanged(false)
                     .build();
         }
 
@@ -92,8 +95,8 @@ public class CurrentEventDto extends IFightEventDto<CurrentFighterFightEventDto>
 
         private int height;
 
-//        @Setter
-//        private String bodyUrl;
+        @Setter
+        private String bodyUrl;
 
         private Double weight;
 

@@ -61,6 +61,13 @@
         </li>
         <li class="nav-item">
             <a class="nav-link text-white"
+               th:classappend="${activeMenu == 'promotion'} ? 'active'"
+               th:href="@{/htj-admin/promotion}">
+                🎁 프로모션
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white"
                th:classappend="${activeMenu == 'fighter'} ? 'active'"
                th:href="@{/htj-admin/fighter/fighters}">
                 🥊 파이터 목록

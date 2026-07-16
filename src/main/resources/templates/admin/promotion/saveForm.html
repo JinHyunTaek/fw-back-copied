@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Promotion</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <h2 class="mb-4">🎁 프로모션 등록</h2>
+
+            <!-- 파일 업로드가 있으므로 multipart/form-data -->
+            <form th:action="@{/htj-admin/promotion}" th:object="${form}"
+                  method="post" enctype="multipart/form-data">
+
+                <!-- 비즈니스 예외 등 전역 에러 메시지 -->
+                <div class="alert alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                    <div th:each="err : ${#fields.globalErrors()}" th:text="${err}"></div>
+                </div>
+
+                <!-- ===== 프로모션 기본 정보 ===== -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-bold">기본 정보</div>
+                    <div class="card-body">
+
+                        <div class="mb-3">
+                            <label class="form-label">제목</label>
+                            <input type="text" class="form-control" th:field="*{title}">
+                            <div class="text-danger" th:if="${#fields.hasErrors('title')}"
+                                 th:errors="*{title}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">혜택(보상 안내 문구)</label>
+                            <input type="text" class="form-control" th:field="*{benefit}"
+                                   placeholder="예) 참여자 중 추첨 5분께 스타벅스 아메리카노 증정">
+                            <div class="text-danger" th:if="${#fields.hasErrors('benefit')}"
+                                 th:errors="*{benefit}"></div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">시작일</label>
+                                <input type="date" class="form-control" th:field="*{startDate}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('startDate')}"
+                                     th:errors="*{startDate}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">종료일</label>
+                                <input type="date" class="form-control" th:field="*{endDate}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('endDate')}"
+                                     th:errors="*{endDate}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">당첨자 발표일</label>
+                                <input type="date" class="form-control" th:field="*{announceDate}">
+                                <div class="text-danger" th:if="${#fields.hasErrors('announceDate')}"
+                                     th:errors="*{announceDate}"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">최대 당첨자 수</label>
+                            <input type="number" min="1" class="form-control"
+                                   th:field="*{maxWinnerCount}">
+                            <div class="text-danger" th:if="${#fields.hasErrors('maxWinnerCount')}"
+                                 th:errors="*{maxWinnerCount}"></div>
+                        </div>
+
+                        <div class="mb-1">
+                            <label class="form-label">유의사항</label>
+                            <textarea class="form-control" rows="4" th:field="*{notice}"></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ===== 기프티콘 목록 ===== -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">기프티콘</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                onclick="addGifticonRow()">+ 기프티콘 추가</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="gifticonContainer"></div>
+                        <p class="text-muted small mb-0">
+                            ※ 등록한 기프티콘 수가 최대 당첨자 수 이상이어야 합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a th:href="@{/htj-admin/promotion}" class="btn btn-secondary">취소</a>
+                    <button type="submit" class="btn btn-primary">등록</button>
+                </div>
+
+            </form>
+
+        </main>
+    </div>
+</div>
+
+<!-- 기프티콘 행 템플릿 -->
+<template id="gifticonRowTemplate">
+    <div class="gifticon-row border rounded p-3 mb-3">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label">상품명</label>
+                <input type="text" class="form-control" data-field="name" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">쿠폰번호</label>
+                <input type="text" class="form-control" data-field="couponNumber" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">카테고리</label>
+                <select class="form-select" data-field="category" required>
+                    <option value="" disabled selected>선택</option>
+                    <option th:each="c : ${T(my.mma.api.event.promotion.entity.GifticonCategory).values()}"
+                            th:value="${c}" th:text="${c}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">유효기간</label>
+                <input type="date" class="form-control" data-field="expiryDate" required>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">순서</label>
+                <input type="number" class="form-control" data-field="displayOrder" min="1" value="1" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">이미지</label>
+                <input type="file" class="form-control" data-field="image" accept="image/*" required>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm w-100"
+                        onclick="removeGifticonRow(this)">삭제</button>
+            </div>
+        </div>
+        <p class="text-muted small mb-0 mt-2">※ 순서(displayOrder)가 낮을수록 상위 상품(1등)으로 노출됩니다.</p>
+    </div>
+</template>
+
+<script>
+    // 행을 0부터 연속 인덱스로 재배치 → gifticonSaveRequests[i].field
+    function reindexGifticonRows() {
+        const rows = document.querySelectorAll('#gifticonContainer .gifticon-row');
+        rows.forEach((row, i) => {
+            row.querySelectorAll('[data-field]').forEach(input => {
+                const field = input.getAttribute('data-field');
+                input.name = `gifticonSaveRequests[${i}].${field}`;
+            });
+        });
+    }
+
+    function addGifticonRow() {
+        const tpl = document.getElementById('gifticonRowTemplate');
+        document.getElementById('gifticonContainer').appendChild(tpl.content.cloneNode(true));
+        reindexGifticonRows();
+    }
+
+    function removeGifticonRow(btn) {
+        btn.closest('.gifticon-row').remove();
+        reindexGifticonRows();
+    }
+
+    // 최초 진입 시 1개 행 자동 추가
+    document.addEventListener('DOMContentLoaded', addGifticonRow);
+</script>
+
+</body>
+</html>

@@ -10,7 +10,7 @@ import my.mma.api.fighter.dto.FighterDto;
 import my.mma.api.fighter.entity.Fighter;
 import my.mma.api.fighter.repository.FighterRepository;
 import my.mma.api.alert.repository.AlertRepository;
-//import my.mma.api.global.s3.service.S3ImgService;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.user.entity.User;
 import my.mma.api.user.repository.UserRepository;
 import my.mma.fixture.entity.user.UserFixture;
@@ -52,8 +52,8 @@ class FighterServiceTest {
     private UserRepository userRepository;
     @Mock
     private UserFighterRatingRepository userFighterRatingRepository;
-//    @Mock
-//    private S3ImgService s3Service;
+    @Mock
+    private S3ImgService s3Service;
 
     @InjectMocks
     private FighterService fighterService;

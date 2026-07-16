@@ -52,7 +52,10 @@ public enum ErrorCode {
     FIGHT_CANCELED_400(BAD_REQUEST),
     LOW_USER_POINT_400(BAD_REQUEST),
     // file upload
-    INVALID_FILE_400(BAD_REQUEST);
+    INVALID_FILE_400(BAD_REQUEST),
+    // promotion
+    PROMOTION_ALREADY_DRAWN_400(BAD_REQUEST),
+    INVALID_EXPIRY_DATE_400(BAD_REQUEST);
 
     private final HttpStatus status;
 

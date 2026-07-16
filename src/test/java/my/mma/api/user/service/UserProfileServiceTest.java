@@ -12,6 +12,7 @@ import my.mma.api.fightevent.entity.FighterFightEvent;
 import my.mma.api.fightevent.entity.property.FightWeight;
 import my.mma.api.fightevent.repository.FightEventRepository;
 import my.mma.api.fightevent.service.FightEventService;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.user.dto.UserBetRecord;
 import my.mma.api.user.dto.UserProfileDto;
 import my.mma.api.user.entity.User;
@@ -47,8 +48,8 @@ class UserProfileServiceTest {
     private FighterRepository fighterRepository;
     @Mock
     private FightEventRepository fightEventRepository;
-//    @Mock
-//    private S3ImgService s3ImgService;
+    @Mock
+    private S3ImgService s3ImgService;
     @Mock
     private FightEventService eventService;
 

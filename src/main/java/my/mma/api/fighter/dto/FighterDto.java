@@ -17,8 +17,8 @@ public class FighterDto {
     private Integer ranking;
     private FightRecord record;
     private Country nationality;
-//    @Setter
-//    private String headshotUrl;
+    @Setter
+    private String headshotUrl;
 
     public static FighterDto toDto(Fighter fighter){
         return toDto(fighter, builder());

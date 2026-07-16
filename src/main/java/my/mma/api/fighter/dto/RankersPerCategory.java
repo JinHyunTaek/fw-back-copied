@@ -23,14 +23,14 @@ public record RankersPerCategory(@JsonProperty("rankers")
 
         private RankingCategory category;
 
-//        private String headshotUrl;
+        private String headshotUrl;
 
         private int ranking;
 
-        public void updateFromFighter(Fighter fighter){
+        public void updateFromFighter(Fighter fighter, String headshotUrl){
             this.id = fighter.getId();
             this.koreanName = fighter.getKoreanName();
-//            this.headshotUrl = headshotUrl;
+            this.headshotUrl = headshotUrl;
         }
 
     }

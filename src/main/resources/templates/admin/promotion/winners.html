@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Promotion Winners</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-dark min-vh-100">
+            <div th:replace="~{admin/fragment/sidebar}"></div>
+        </nav>
+
+        <main class="col-md-10 ms-sm-auto px-4 py-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🏆 당첨자 확인 / 발송</h2>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/htj-admin/promotion/{id}(id=${promotionId})}" class="btn btn-secondary">상세</a>
+                    <form th:action="@{/htj-admin/promotion/{id}/winners/send-all(id=${promotionId})}"
+                          method="post" class="m-0"
+                          onsubmit="return confirm('미발송 당첨자에게 일괄 발송할까요?');">
+                        <button type="submit" class="btn btn-primary">미발송 일괄 발송</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
+            <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>닉네임</th>
+                            <th>이메일</th>
+                            <th>상품</th>
+                            <th>쿠폰번호</th>
+                            <th>쿠폰</th>
+                            <th>상태</th>
+                            <th>발송</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="w : ${winners}">
+                            <td th:text="${w.nickname()}"></td>
+                            <td th:text="${w.email()}"></td>
+                            <td th:text="${w.gifticonName()}"></td>
+                            <td th:text="${w.couponNumber()}"></td>
+                            <td>
+                                <a th:if="${w.couponImageUrl()}" th:href="${w.couponImageUrl()}" target="_blank">보기</a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary" th:if="${w.sendStatus().name() == 'PENDING'}">대기</span>
+                                <span class="badge bg-success"   th:if="${w.sendStatus().name() == 'SENT'}">발송완료</span>
+                                <span class="badge bg-danger"    th:if="${w.sendStatus().name() == 'FAILED'}">실패</span>
+                            </td>
+                            <td>
+                                <form th:action="@{/htj-admin/promotion/{pid}/winners/{wid}/send(pid=${promotionId}, wid=${w.winnerId()})}"
+                                      method="post" class="m-0"
+                                      th:if="${w.sendStatus().name() != 'SENT'}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">발송</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${winners.isEmpty()}">
+                            <td colspan="7" class="text-center py-4 text-muted">당첨자가 없습니다. (추첨 전이거나 참가자 없음)</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+</body>
+</html>

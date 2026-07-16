@@ -14,7 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-@Service
+//@Service
 @Slf4j
 public class FirebaseInitialization {
 

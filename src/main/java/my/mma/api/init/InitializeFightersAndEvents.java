@@ -45,7 +45,7 @@ import static my.mma.api.global.utils.CustomUnitUtils.toCentimeter;
 import static my.mma.api.global.utils.ModifyUtils.toKg;
 
 @Slf4j
-//@Component
+@Component
 @Profile("dev")
 @RequiredArgsConstructor
 public class InitializeFightersAndEvents {
@@ -87,14 +87,15 @@ public class InitializeFightersAndEvents {
                         .password(bCryptPasswordEncoder.encode(adminPwd))
                         .nickname(adminNickname)
                         .role("ROLE_ADMIN")
-                        .point(0)
+                        .point(10000)
                         .earnedBetSucceedPoint(0)
                         .build();
+
         userRepository.save(admin);
         userPreferencesRepository.save(UserPreferences.of(admin));
-        Map<String, Fighter> fighterNameMap = saveFighters();
-        readFightEventInfoFromJsonFile(fighterNameMap);
-        readSeedFAQJsonFile();
+        // Map<String, Fighter> fighterNameMap = saveFighters();
+        // readFightEventInfoFromJsonFile(fighterNameMap);
+        // readSeedFAQJsonFile();
     }
 
     /**

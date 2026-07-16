@@ -1,97 +1,49 @@
 package my.mma.api.smtp.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import my.mma.api.security.entity.PasswordResetToken;
-import my.mma.api.security.repository.PasswordResetTokenRepository;
-import my.mma.api.smtp.constant.JoinCodeConstant;
-import my.mma.api.smtp.dto.EmailVerificationCodeRequest;
-import my.mma.api.smtp.dto.PasswordResetTokenResponse;
-import my.mma.api.smtp.dto.VerifyCodeRequest;
-import my.mma.api.smtp.entity.JoinCode;
-import my.mma.api.smtp.repository.JoinCodeRepository;
-import my.mma.api.user.entity.User;
-import my.mma.api.user.repository.UserRepository;
-import my.mma.api.exception.ErrorCode;
 import my.mma.api.exception.CustomException;
-import my.mma.api.smtp.dto.EmailVerificationSendResult;
+import my.mma.api.exception.ErrorCode;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Random;
-import java.util.UUID;
-
-import static my.mma.api.smtp.dto.EmailVerificationSendResult.*;
-
-@Slf4j
+/**
+ * 범용 메일 발송기 (인프라).
+ * 도메인/기능에 무관한 원시값(to/subject/body 등)만 받는다. 제목·본문 조립은 각 기능 서비스가 담당.
+ */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class SmtpService {
 
     private final JavaMailSender mailSender;
-    private final UserRepository userRepository;
-    private final JoinCodeRepository joinCodeRepository;
-    private final PasswordResetTokenRepository resetTokenRepository;
 
-    @Transactional
-    public EmailVerificationSendResult sendEmailVerificationCode(EmailVerificationCodeRequest request) {
-        if (request.isJoin()) {
-            if (userRepository.existsByEmail(request.email()))
-                return EMAIL_ALREADY_EXISTS;
-        } else {
-            User user = userRepository.findByEmail(request.email()).orElse(null);
-            if (user == null) {
-                return EMAIL_NOT_FOUND;
-            } else if (user.getPassword() == null) {
-                return SOCIAL_LOGIN_ACCOUNT;
-            }
+    /** 텍스트 메일 */
+    public void sendText(String to, String subject, String body) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(body);
+        mailSender.send(message);
+    }
+
+    /** HTML 메일 + 본문 인라인 이미지(cid). html 안의 {@code <img src="cid:{cid}">}와 cid가 일치해야 렌더된다. */
+    public void sendHtmlWithInlineImage(String to, String subject, String html,
+                                        String cid, byte[] image, String contentType) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8"); // multipart
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true); // html
+            helper.addInline(cid, new ByteArrayResource(image), contentType);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new CustomException(ErrorCode.SERVER_ERROR_500, "메일 발송 실패");
         }
-        sendCode(request);
-        return SUCCESS;
-    }
-
-    private void sendCode(EmailVerificationCodeRequest request) {
-        String joinCode = generateRandomNumber();
-        SimpleMailMessage smm = new SimpleMailMessage();
-        smm.setTo(request.email());
-        smm.setSubject("[fightweek] 이메일 인증 코드 안내");
-        smm.setText(
-                "아래 인증 코드를 입력하여 인증을 완료해주세요.\n" + "인증 코드:" + joinCode);
-        mailSender.send(smm);
-        joinCodeRepository.save(JoinCode.builder()
-                .email(request.email())
-                .code(joinCode)
-                .expiration(JoinCodeConstant.EXPIRATION_SECONDS.getValue())
-                .build());
-    }
-
-    private String generateRandomNumber() {
-        return String.format("%06d", new Random().nextInt(1_000_000));
-    }
-
-    @Transactional
-    public boolean verifyCode(VerifyCodeRequest verifyCodeDto) {
-        JoinCode joinCode = joinCodeRepository.findById(verifyCodeDto.email()).orElseThrow(
-                () -> new CustomException(ErrorCode.NO_SUCH_EMAIL_CONFIGURED_400)
-        );
-        if (joinCode.getCode().equals(verifyCodeDto.code())) {
-            joinCodeRepository.delete(joinCode);
-            return true;
-        }
-        return false;
-    }
-
-    @Transactional
-    public PasswordResetTokenResponse createPasswordResetToken(String email) {
-        String token = UUID.randomUUID().toString();
-        resetTokenRepository.save(PasswordResetToken.builder()
-                .token(token)
-                .email(email)
-                .build());
-        return new PasswordResetTokenResponse(token);
     }
 
 }

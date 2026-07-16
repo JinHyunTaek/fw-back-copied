@@ -19,14 +19,14 @@ public class FighterDetailDto extends FighterDto {
     private LocalDate birthday;
     private int reach;
     private boolean alert;
-//    private String bodyUrl;
+    private String bodyUrl;
     private String nickname;
     private double avgRating;
     private int myRating;
     private List<FighterFightEventDto> fighterFightEvents;
 
     public static FighterDetailDto toDto(Fighter fighter, List<FighterFightEventDto> fighterFightEvents,
-                                         boolean alert, int myRating) {
+                                         boolean alert, int myRating, String bodyUrl) {
         return FighterDto.toDto(fighter, builder()
                 .height(fighter.getHeight())
                 .weight(fighter.getWeight())
@@ -34,7 +34,7 @@ public class FighterDetailDto extends FighterDto {
                 .reach(fighter.getReach())
                 .alert(alert)
                 .nickname(fighter.getNickname())
-//                .bodyUrl(bodyUrl)
+                .bodyUrl(bodyUrl)
                 .avgRating(fighter.getAvgRating())
                 .myRating(myRating)
                 .fighterFightEvents(fighterFightEvents)

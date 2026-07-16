@@ -27,7 +27,7 @@ public class GlobalConfig {
     public RestTemplate flaskRestTemplate(RestTemplateBuilder builder){
         return builder
                 .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofMinutes(3))
+                .setReadTimeout(Duration.ofMinutes(5))
                 .build();
     }
 

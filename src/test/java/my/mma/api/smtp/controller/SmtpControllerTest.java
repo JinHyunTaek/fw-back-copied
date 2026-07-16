@@ -5,7 +5,7 @@ import my.mma.api.config.TestSecurityConfig;
 import my.mma.api.smtp.dto.EmailVerificationCodeRequest;
 import my.mma.api.smtp.dto.EmailVerificationSendResult;
 import my.mma.api.smtp.dto.VerifyCodeRequest;
-import my.mma.api.smtp.service.SmtpService;
+import my.mma.api.smtp.service.UserVerificationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +37,7 @@ class SmtpControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private SmtpService smtpService;
+    private UserVerificationService userVerificationService;
 
     @DisplayName("인증 코드 전송 완료 응답(true)")
     @Test
@@ -45,7 +45,7 @@ class SmtpControllerTest {
         //given
         String email = "email123@google.com";
         EmailVerificationCodeRequest request = new EmailVerificationCodeRequest(email, true);
-        when(smtpService.sendEmailVerificationCode(request)).thenReturn(SUCCESS);
+        when(userVerificationService.sendEmailVerificationCode(request)).thenReturn(SUCCESS);
 
         //when && then
         MvcResult mvcResult = mockMvc.perform(post("/smtp/verification-code-transmission")
@@ -66,7 +66,7 @@ class SmtpControllerTest {
         //given
         String email = "email123@google.com";
         EmailVerificationCodeRequest request = new EmailVerificationCodeRequest(email, true);
-        when(smtpService.sendEmailVerificationCode(request)).thenReturn(EMAIL_ALREADY_EXISTS);
+        when(userVerificationService.sendEmailVerificationCode(request)).thenReturn(EMAIL_ALREADY_EXISTS);
 
         //when && then
         MvcResult mvcResult = mockMvc.perform(post("/smtp/verification-code-transmission")
@@ -88,7 +88,7 @@ class SmtpControllerTest {
         String email = "email123@google.com";
         String joinCode = "123456";
         VerifyCodeRequest verifyCodeRequest = getVerifyCodeRequest(email, joinCode);
-        when(smtpService.verifyCode(verifyCodeRequest)).thenReturn(true);
+        when(userVerificationService.verifyCode(verifyCodeRequest)).thenReturn(true);
 
         //when && then
         MvcResult mvcResult = mockMvc.perform(post("/smtp/code-verification")
@@ -149,7 +149,7 @@ class SmtpControllerTest {
         String email = "email123@google.com";
         String invalidJoinCode = "123456";
         VerifyCodeRequest verifyCodeRequest = getVerifyCodeRequest(email, invalidJoinCode);
-        when(smtpService.verifyCode(verifyCodeRequest)).thenReturn(false);
+        when(userVerificationService.verifyCode(verifyCodeRequest)).thenReturn(false);
 
         //when && then
         mockMvc.perform(post("/smtp/code-verification")

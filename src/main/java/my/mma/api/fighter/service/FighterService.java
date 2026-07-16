@@ -18,6 +18,7 @@ import my.mma.api.fighter.repository.UserFighterRatingRepository;
 import my.mma.api.fightevent.dto.FightEventDto.FighterFightEventDto;
 import my.mma.api.fightevent.entity.FighterFightEvent;
 import my.mma.api.fightevent.repository.FighterFightEventRepository;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.user.entity.User;
 import my.mma.api.user.repository.UserRepository;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -28,8 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -42,6 +45,7 @@ public class FighterService {
     private final UserFighterRatingRepository userFighterRatingRepository;
     private final AlertRepository alertRepository;
     private final UserRepository userRepository;
+    private final S3ImgService s3Service;
 
     public FighterDetailDto detail(String email, Long fighterId) {
         Fighter fighter = getFighter(fighterId);
@@ -51,33 +55,35 @@ public class FighterService {
                 findByFighterIdAndYear(fighter.getId(), LocalDate.now().getYear());
         List<FighterFightEventDto> fighterFightEventDtos = fighterFightEvents.stream()
                 .map(FighterFightEventDto::toDto)
-                .toList();
-//                .peek(ffe -> {
-//                    ffe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(ffe.getWinner().getName()));
-//                    ffe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(ffe.getLoser().getName()));
-//                }).toList();
-//        String bodyUrl = s3Service.generateFighterBodyUrl(fighter.getName());
+                .peek(ffe -> {
+                    ffe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(ffe.getWinner().getName()));
+                    ffe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(ffe.getLoser().getName()));
+                }).toList();
+        String bodyUrl = s3Service.generateFighterBodyUrlOrNull(fighter.getName());
         UserFighterRating myRating = userFighterRatingRepository.findByUserIdAndFighterId(user.getId(), fighterId)
                 .orElse(null);
         return FighterDetailDto.toDto(fighter, fighterFightEventDtos,
-                isAlertExists, myRating != null ? myRating.getRating() : 0);
+                isAlertExists, myRating != null ? myRating.getRating() : 0, bodyUrl);
     }
 
     public List<FighterFightEventDto> getFighterFightEventsByYear(Long fighterId, int year) {
         return fighterFightEventRepository.findByFighterIdAndYear(fighterId, year)
                 .stream().map(FighterFightEventDto::toDto)
-//                .peek(ffe -> {
-//                    ffe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(ffe.getWinner().getName()));
-//                    ffe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrl(ffe.getLoser().getName()));
-//                })
+                .peek(ffe -> {
+                    ffe.getWinner().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(ffe.getWinner().getName()));
+                    ffe.getLoser().setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(ffe.getLoser().getName()));
+                })
                 .toList();
     }
 
 
     public Page<FighterDto> search(String keyword, Pageable pageable) {
         Page<Fighter> fighters = fighterRepository.searchByNameOrKoreanName(keyword, pageable);
-        //                    fighterDto.setHeadshotUrl(s3Service.generateFighterHeadshotUrl(fighterDto.getName()));
-        return fighters.map(FighterDto::toDto);
+        return fighters.map(fighter -> {
+            FighterDto dto = FighterDto.toDto(fighter);
+            dto.setHeadshotUrl(s3Service.generateFighterHeadshotUrlOrNull(fighter.getName()));
+            return dto;
+        });
     }
 
     @Transactional
@@ -103,8 +109,7 @@ public class FighterService {
         if (pageable.getPageNumber() >= 10)
             return new PageImpl<>(List.of(), pageable, 0);
         return fighterRepository.findByAvgRatingGreaterThan(-1, pageable)
-                .map(FighterRatingDto::toDto);
-//                .map(fighter -> toDto(fighter, s3Service.generateFighterHeadshotUrl(fighter.getName())));
+                .map(fighter -> FighterRatingDto.toDto(fighter, s3Service.generateFighterHeadshotUrlOrNull(fighter.getName())));
     }
 
     private @NonNull Fighter getFighter(Long fighterId) {

@@ -10,6 +10,7 @@ import my.mma.api.fightevent.entity.FighterFightEvent;
 import my.mma.api.fightevent.entity.property.CardStartDateTimeInfo;
 import my.mma.api.fightevent.repository.FightEventRepository;
 import my.mma.api.fightevent.repository.FighterFightEventRepository;
+import my.mma.api.global.s3.service.S3ImgService;
 import my.mma.api.alert.repository.AlertRepository;
 import my.mma.api.user.entity.User;
 import my.mma.api.user.repository.UserRepository;
@@ -46,8 +47,8 @@ class FightEventServiceTest {
     private FightEventRepository fightEventRepository;
     @Mock
     private FighterFightEventRepository fighterFightEventRepository;
-//    @Mock
-//    private S3ImgService s3Service;
+    @Mock
+    private S3ImgService s3Service;
     @Mock
     private AlertRepository alertRepository;
     @Mock

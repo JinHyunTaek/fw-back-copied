@@ -32,7 +32,7 @@ public class InquiryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<InquiryBodyResponse> inquiryBody(
-            @PathVariable("id") Long id
+            @PathVariable Long id
     ) {
         return ResponseEntity.ok().body(inquiryService.inquiryBody(id));
     }

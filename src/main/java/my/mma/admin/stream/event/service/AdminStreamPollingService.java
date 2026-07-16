@@ -200,6 +200,7 @@ public class AdminStreamPollingService {
                                 FighterFightEventCardFighterDto originalWinner = redisCard.getWinner();
                                 redisCard.setWinner(redisCard.getLoser());
                                 redisCard.setLoser(originalWinner);
+                                redisCard.setWinnerChanged(true);
                             }
                             isSingleCardUpdated = true;
                             break;
