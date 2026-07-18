@@ -192,7 +192,7 @@ GitHub push (master)
    └─ GitHub Actions
         ├─ ./gradlew clean build      # 빌드 (secrets로 application.yml 주입)
         ├─ docker build & push → AWS ECR
-        └─ SSH → EC2 → ./deploy-spring.sh   # 무중단성 재배포
+        └─ SSH → EC2 → ./deploy-spring.sh
 ```
 
 운영 환경은 **API 서버**와 **모니터링 서버**를 분리해 구성합니다.
