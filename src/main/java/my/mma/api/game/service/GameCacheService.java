@@ -9,6 +9,7 @@ import my.mma.api.fightevent.entity.property.WinMethod;
 import my.mma.api.fightevent.repository.FighterFightEventRepository;
 import my.mma.api.game.dto.FighterNamePair;
 import my.mma.api.global.redis.utils.RedisUtils;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -36,21 +37,57 @@ public class GameCacheService {
 
     @Cacheable(value = "allFighterNamePairs", sync = true)
     public Set<FighterNamePair> allFighterNamePairs() {
+        return fetchAllFighterNamePairs();
+    }
+
+    @Cacheable(value = "todayFightGamesNormal", sync = true)
+    public Set<FighterFightEvent> todayFightGamesNormal() {
+        return fetchTodayFightGamesNormal();
+    }
+
+    @Cacheable(value = "todayFightGamesHard", sync = true)
+    public Set<FighterFightEvent> todayFightGamesHard() {
+        return fetchTodayFightGamesHard();
+    }
+
+    // ===== 스케줄 갱신 =====
+
+    @CachePut(value = "popularFighterNamePairs")
+    public Set<FighterNamePair> refreshPopularFighterNamePairs() {
+        return fetchPopularFighterNamePairs();
+    }
+
+    @CachePut(value = "allFighterNamePairs")
+    public Set<FighterNamePair> refreshAllFighterNamePairs() {
+        return fetchAllFighterNamePairs();
+    }
+
+    @CachePut(value = "todayFightGamesNormal")
+    public Set<FighterFightEvent> refreshTodayFightGamesNormal() {
+        return fetchTodayFightGamesNormal();
+    }
+
+    @CachePut(value = "todayFightGamesHard")
+    public Set<FighterFightEvent> refreshTodayFightGamesHard() {
+        return fetchTodayFightGamesHard();
+    }
+
+    // ===== 조회 =====
+
+    private Set<FighterNamePair> fetchAllFighterNamePairs() {
         List<FighterNamePair> all = new ArrayList<>(fighterRepository.findEveryNamePairs());
         Collections.shuffle(all);
         return all.stream().limit(600).collect(Collectors.toSet());
     }
 
-    @Cacheable(value = "todayFightGamesNormal", sync = true)
-    public Set<FighterFightEvent> todayFightGamesNormal() {
+    private Set<FighterFightEvent> fetchTodayFightGamesNormal() {
         Set<String> names = fetchPopularFighterNamePairs().stream()
                 .map(FighterNamePair::name)
                 .collect(Collectors.toSet());
         return fighterFightEventRepository.findCompletedForNormalGame(names, gameWinMethods());
     }
 
-    @Cacheable(value = "todayFightGamesHard", sync = true)
-    public Set<FighterFightEvent> todayFightGamesHard() {
+    private Set<FighterFightEvent> fetchTodayFightGamesHard() {
         List<FighterFightEvent> all = fighterFightEventRepository.findCompletedForHardGame(gameWinMethods());
         Collections.shuffle(all);
         return all.stream().limit(500).collect(Collectors.toSet());
