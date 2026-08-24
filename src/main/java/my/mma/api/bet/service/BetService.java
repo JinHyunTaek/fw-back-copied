@@ -67,7 +67,7 @@ public class BetService {
         if (CustomDateUtils.isThisWeekend(currentEvent.getDisplayDate()) ||
                 (eventStartDateTime != null && LocalDateTime.now().isAfter((eventStartDateTime))))
             throw new CustomException(ErrorCode.BET_NOT_AVAILABLE_DATE_403);
-        if(betRequest.seedPoint() % ENTRY_FEE.getPoint() != 0)
+        if (betRequest.seedPoint() % ENTRY_FEE.getPoint() != 0)
             throw new CustomException(ErrorCode.INVALID_SEEDPOINT_400);
         if (user.getPoint() < betRequest.seedPoint())
             throw new CustomException(ErrorCode.LOW_USER_POINT_400);
@@ -80,6 +80,8 @@ public class BetService {
                 () -> new CustomException(ErrorCode.NO_SUCH_EVENT_FOUND_400)
         );
         Bet bet = betRequest.toEntity(user, fightEvent);
+        betRequest.singleBetCards().sort(((o1, o2) ->
+                Math.toIntExact(o1.fighterFightEventId() - o2.fighterFightEventId())));
         for (SingleBetRequest.SingleBetCardRequest sbc : betRequest.singleBetCards()) {
             FighterFightEvent ffe = extractFighterFightEventById(sbc.fighterFightEventId());
             if (ffe.isCanceled()) {
@@ -120,9 +122,9 @@ public class BetService {
                 (eventStartDateTime != null && LocalDateTime.now().isAfter((eventStartDateTime))))
             throw new CustomException(ErrorCode.BET_NOT_AVAILABLE_DATE_403);
         User user = extractUserByEmail(email);
-        Bet bet = betRepository.findById(betId).orElseThrow(() -> new CustomException(
-                ErrorCode.RESOURCE_NOT_FOUND
-        ));
+        Bet bet = betRepository.findByIdAndUserId(betId, user.getId()).orElseThrow(
+                () -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND)
+        );
         String key = getBetCancelCountKey(currentEvent.getId(), user.getId());
         Duration ttl = Duration.between(LocalDateTime.now(), currentEvent.getDisplayDate().atStartOfDay().plusDays(2));
         Long count = betCancelCountRedisTemplate.opsForValue().increment(key);
@@ -162,7 +164,7 @@ public class BetService {
     private LocalDateTime getCurrentEventStartDateTime(CurrentEventDto currentEvent) {
         CardStartDateTimeInfoDto startDateTimeInfoDto = currentEvent.getEarlyCardDateTimeInfo() != null ? currentEvent.getEarlyCardDateTimeInfo()
                 : currentEvent.getPrelimCardDateTimeInfo();
-        if(startDateTimeInfoDto == null) {
+        if (startDateTimeInfoDto == null) {
             startDateTimeInfoDto = currentEvent.getMainCardDateTimeInfo();
         }
         if (startDateTimeInfoDto == null) {

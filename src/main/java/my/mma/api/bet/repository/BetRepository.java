@@ -14,6 +14,8 @@ import java.util.Optional;
 
 public interface BetRepository extends JpaRepository<Bet, Long> {
 
+    Optional<Bet> findByIdAndUserId(Long betId, Long userId);
+
     @EntityGraph(attributePaths = {
             "betCards",
             "betCards.fighterFightEvent",

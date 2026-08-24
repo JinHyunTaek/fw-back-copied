@@ -8,12 +8,14 @@ import lombok.extern.slf4j.Slf4j;
 import my.mma.api.exception.ErrorCode;
 import my.mma.api.exception.CustomException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+@Profile("prod")
 @Service
 @Slf4j
 public class FirebaseInitialization {
