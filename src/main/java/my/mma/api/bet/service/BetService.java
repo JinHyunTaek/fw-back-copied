@@ -31,7 +31,10 @@ import org.springframework.transaction.support.TransactionSynchronization;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Comparator.comparingLong;
 
 import static my.mma.api.bet.constant.PredictionPolicy.ENTRY_FEE;
 import static my.mma.api.bet.dto.BetResponse.SingleBetResponse;
@@ -80,9 +83,12 @@ public class BetService {
                 () -> new CustomException(ErrorCode.NO_SUCH_EVENT_FOUND_400)
         );
         Bet bet = betRequest.toEntity(user, fightEvent);
-        betRequest.singleBetCards().sort(((o1, o2) ->
-                Math.toIntExact(o1.fighterFightEventId() - o2.fighterFightEventId())));
-        for (SingleBetRequest.SingleBetCardRequest sbc : betRequest.singleBetCards()) {
+        // 픽 카운트 row 를 항상 같은 순서로 잠가 데드락을 막는다.
+        // 요청 리스트를 제자리 정렬하면 불변 리스트일 때 깨지므로 사본을 정렬한다.
+        List<SingleBetRequest.SingleBetCardRequest> betCards =
+                new ArrayList<>(betRequest.singleBetCards());
+        betCards.sort(comparingLong(SingleBetRequest.SingleBetCardRequest::fighterFightEventId));
+        for (SingleBetRequest.SingleBetCardRequest sbc : betCards) {
             FighterFightEvent ffe = extractFighterFightEventById(sbc.fighterFightEventId());
             if (ffe.isCanceled()) {
                 throw new CustomException(ErrorCode.FIGHT_CANCELED_400);

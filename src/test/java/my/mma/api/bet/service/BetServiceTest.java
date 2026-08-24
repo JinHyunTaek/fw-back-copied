@@ -329,7 +329,7 @@ class BetServiceTest {
         void deleteBetSuccess_thenReturnRestoredUserPoint(long cancelCount) {
             when(currentEventRedisUtils.getData(CURRENT_EVENT.getKey())).thenReturn(currentEventDto);
             when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-            when(betRepository.findById(betId)).thenReturn(Optional.of(bet));
+            when(betRepository.findByIdAndUserId(betId, user.getId())).thenReturn(Optional.of(bet));
             when(betCancelCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.increment(anyString())).thenReturn(cancelCount);
             when(betRepository.findByFightEventIdAndUserId(eventId, user.getId())).thenReturn(List.of());
@@ -395,7 +395,7 @@ class BetServiceTest {
         void noSuchBetId_thenThrow_RESOURCE_NOT_FOUND() {
             when(currentEventRedisUtils.getData(CURRENT_EVENT.getKey())).thenReturn(currentEventDto);
             when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-            when(betRepository.findById(betId)).thenReturn(Optional.empty());
+            when(betRepository.findByIdAndUserId(betId, user.getId())).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> betService.deletePrediction(user.getEmail(), betId))
                     .isInstanceOf(CustomException.class)
@@ -408,7 +408,7 @@ class BetServiceTest {
         void exceedCancelLimit_thenThrow_BET_LIMIT_EXCEED_403() {
             when(currentEventRedisUtils.getData(CURRENT_EVENT.getKey())).thenReturn(currentEventDto);
             when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-            when(betRepository.findById(betId)).thenReturn(Optional.of(bet));
+            when(betRepository.findByIdAndUserId(betId, user.getId())).thenReturn(Optional.of(bet));
             when(betCancelCountRedisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.increment(anyString())).thenReturn((long) BET_CANCEL_AVAILABLE_COUNT + 1);
 
