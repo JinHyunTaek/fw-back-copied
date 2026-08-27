@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="베팅 픽 동시성 — direct vs kafka" enabled="true">
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="host" elementType="Argument">
+            <stringProp name="Argument.name">host</stringProp>
+            <stringProp name="Argument.value">${__P(host,localhost)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="port" elementType="Argument">
+            <stringProp name="Argument.name">port</stringProp>
+            <stringProp name="Argument.value">${__P(port,8080)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="users" elementType="Argument">
+            <stringProp name="Argument.name">users</stringProp>
+            <stringProp name="Argument.value">${__P(users,1000)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="eventId" elementType="Argument">
+            <stringProp name="Argument.name">eventId</stringProp>
+            <stringProp name="Argument.value">${__P(eventId,1)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="fightId1" elementType="Argument">
+            <stringProp name="Argument.name">fightId1</stringProp>
+            <stringProp name="Argument.value">${__P(fightId1,1)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="fightId2" elementType="Argument">
+            <stringProp name="Argument.name">fightId2</stringProp>
+            <stringProp name="Argument.value">${__P(fightId2,2)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="fightId3" elementType="Argument">
+            <stringProp name="Argument.name">fightId3</stringProp>
+            <stringProp name="Argument.value">${__P(fightId3,3)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="csv" elementType="Argument">
+            <stringProp name="Argument.name">csv</stringProp>
+            <stringProp name="Argument.value">${__P(csv,../build/loadtest-users.csv)}</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <!-- 스레드 그룹은 하나만 둔다. Number of Threads 가 곧 동시 사용자 수이고,
+           서로 다른 사용자로 갈라지는 것은 아래 CSV Data Set Config 가 담당한다. -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="동시 픽 ${users}명 (같은 fightId)" enabled="true">
+        <stringProp name="ThreadGroup.num_threads">${users}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">0</stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <!-- 스레드마다 CSV 한 줄씩 배급 → 200명이 서로 다른 계정으로 요청하게 된다 -->
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="사용자 · 토큰 CSV" enabled="true">
+          <stringProp name="filename">${csv}</stringProp>
+          <stringProp name="variableNames">email,token</stringProp>
+          <stringProp name="delimiter">,</stringProp>
+          <boolProp name="ignoreFirstLine">false</boolProp>
+          <boolProp name="quotedData">false</boolProp>
+          <boolProp name="recycle">false</boolProp>
+          <boolProp name="stopThread">true</boolProp>
+          <stringProp name="shareMode">shareMode.all</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="헤더" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <!-- 전원이 같은 fightId 를 찍어야 공유 row 경합이 재현된다 -->
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="PATCH /bet" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{
+  "eventId": ${eventId},
+  "seedPoint": 900,
+  "singleBetCards": [
+    {
+      "fighterFightEventId": ${fightId1},
+      "betPrediction": {
+        "myWinnerId": ${__intSum(${fightId1},${fightId1},-1)},
+        "myLoserId": ${__intSum(${fightId1},${fightId1},0)},
+        "draw": false, "finishRound": null, "winMethod": null,
+        "isFotN": false, "isPotN": false
+      }
+    },
+    {
+      "fighterFightEventId": ${fightId2},
+      "betPrediction": {
+        "myWinnerId": ${__intSum(${fightId2},${fightId2},-1)},
+        "myLoserId": ${__intSum(${fightId2},${fightId2},0)},
+        "draw": false, "finishRound": null, "winMethod": null,
+        "isFotN": false, "isPotN": false
+      }
+    },
+    {
+      "fighterFightEventId": ${fightId3},
+      "betPrediction": {
+        "myWinnerId": ${__intSum(${fightId3},${fightId3},-1)},
+        "myLoserId": ${__intSum(${fightId3},${fightId3},0)},
+        "draw": false, "finishRound": null, "winMethod": null,
+        "isFotN": false, "isPotN": false
+      }
+    }
+  ]
+}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${host}</stringProp>
+          <stringProp name="HTTPSampler.port">${port}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/bet</stringProp>
+          <stringProp name="HTTPSampler.method">PATCH</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <stringProp name="HTTPSampler.connect_timeout">10000</stringProp>
+          <stringProp name="HTTPSampler.response_timeout">60000</stringProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <!-- 201 이 아니면 실패로 집계. 403/400 이 대량으로 나오면 시더 조건이 안 맞은 것이다. -->
+          <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="201 확인" enabled="true">
+            <collectionProp name="Asserion.test_strings">
+              <stringProp name="49586">201</stringProp>
+            </collectionProp>
+            <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
+            <boolProp name="Assertion.assume_success">false</boolProp>
+            <intProp name="Assertion.test_type">8</intProp>
+          </ResponseAssertion>
+          <hashTree/>
+        </hashTree>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time><latency>true</latency><timestamp>true</timestamp>
+              <success>true</success><label>true</label><code>true</code>
+              <message>true</message><threadName>true</threadName><dataType>false</dataType>
+              <encoding>false</encoding><assertions>true</assertions><subresults>false</subresults>
+              <responseData>false</responseData><samplerData>false</samplerData><xml>false</xml>
+              <fieldNames>true</fieldNames><responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders><responseDataOnError>true</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes><sentBytes>true</sentBytes><threadCounts>true</threadCounts>
+              <idleTime>true</idleTime><connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

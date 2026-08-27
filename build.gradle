@@ -43,6 +43,7 @@ dependencies {
 	implementation 'com.google.oauth-client:google-oauth-client-jetty:1.36.0'
 
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-mail', version: '3.0.5'
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.11.0'
@@ -64,6 +65,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")

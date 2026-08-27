@@ -8,7 +8,7 @@ import my.mma.api.bet.entity.BetCard;
 import my.mma.api.bet.entity.BetPrediction;
 import my.mma.api.bet.repository.BetCardRepository;
 import my.mma.api.bet.repository.BetRepository;
-import my.mma.api.bet.repository.FightPickCountRepository;
+import my.mma.api.bet.event.FightPickEventPublisher;
 import my.mma.api.exception.CustomException;
 import my.mma.api.exception.ErrorCode;
 import my.mma.api.fightevent.dto.CurrentEventDto;
@@ -55,7 +55,9 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import static my.mma.api.bet.service.BetService.BET_AVAILABLE_COUNT;
+
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static my.mma.api.bet.service.BetService.BET_CANCEL_AVAILABLE_COUNT;
 import static my.mma.api.exception.ErrorCode.*;
 import static my.mma.api.fightevent.dto.CurrentEventDto.toDto;
@@ -67,6 +69,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BetServiceTest {
+
+    /** 운영 기본값. betAvailableCount 는 @Value 필드라 @InjectMocks 가 채워주지 않으므로 직접 주입한다. */
+    private static final int BET_AVAILABLE_COUNT = 3;
 
     @InjectMocks
     private BetService betService;
@@ -84,11 +89,16 @@ class BetServiceTest {
     @Mock
     private RedisUtils<CurrentEventDto> currentEventRedisUtils;
     @Mock
-    private FightPickCountRepository fightPickCountRepository;
+    private FightPickEventPublisher fightPickEventPublisher;
     @Mock
     private StringRedisTemplate betCancelCountRedisTemplate;
     @Mock
     private ValueOperations<String, String> valueOperations;
+
+    @BeforeEach
+    void injectConfigurableLimits() {
+        ReflectionTestUtils.setField(betService, "betAvailableCount", BET_AVAILABLE_COUNT);
+    }
 
     @Nested
     @DisplayName("BetService.bet() test")

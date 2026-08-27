@@ -7,9 +7,11 @@ import my.mma.api.bet.dto.BetResponse;
 import my.mma.api.bet.dto.SingleBetRequest;
 import my.mma.api.bet.entity.Bet;
 import my.mma.api.bet.entity.BetCard;
+import my.mma.api.bet.entity.BetPrediction;
+import my.mma.api.bet.event.FightPickEvent;
+import my.mma.api.bet.event.FightPickEventPublisher;
 import my.mma.api.bet.repository.BetCardRepository;
 import my.mma.api.bet.repository.BetRepository;
-import my.mma.api.bet.repository.FightPickCountRepository;
 import my.mma.api.exception.CustomException;
 import my.mma.api.exception.ErrorCode;
 import my.mma.api.fightevent.dto.CardStartDateTimeInfoDto;
@@ -24,6 +26,7 @@ import my.mma.api.global.redis.utils.RedisUtils;
 import my.mma.api.global.utils.CustomDateUtils;
 import my.mma.api.user.entity.User;
 import my.mma.api.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +37,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Comparator.comparingLong;
 
 import static my.mma.api.bet.constant.PredictionPolicy.ENTRY_FEE;
 import static my.mma.api.bet.dto.BetResponse.SingleBetResponse;
@@ -53,10 +55,16 @@ public class BetService {
     private final FightEventRepository fightEventRepository;
     private final FighterFightEventRepository fighterFightEventRepository;
     private final RedisUtils<CurrentEventDto> currentEventRedisUtils;
-    private final FightPickCountRepository fightPickCountRepository;
+    private final FightPickEventPublisher fightPickEventPublisher;
     private final StringRedisTemplate betCancelCountRedisTemplate;
 
-    protected static final int BET_AVAILABLE_COUNT = 3;
+    /**
+     * 이벤트당 예측 가능 횟수. 운영은 3이며, 부하 테스트에서는 같은 계정으로 반복 요청해야 해
+     * loadtest 프로파일에서만 크게 잡는다(기본값이 3이라 설정이 없으면 운영 동작 그대로다).
+     */
+    @Value("${bet.available-count:3}")
+    private int betAvailableCount;
+
     protected static final int BET_CANCEL_AVAILABLE_COUNT = 3;
 
     @Loggable
@@ -75,7 +83,7 @@ public class BetService {
         if (user.getPoint() < betRequest.seedPoint())
             throw new CustomException(ErrorCode.LOW_USER_POINT_400);
         if (betCardRepository.countByUserIdAndFightEventId(user.getId(), currentEvent.getId())
-                + betRequest.singleBetCards().size() > BET_AVAILABLE_COUNT) {
+                + betRequest.singleBetCards().size() > betAvailableCount) {
             throw new CustomException(ErrorCode.BET_LIMIT_EXCEED_403);
         }
 
@@ -83,12 +91,8 @@ public class BetService {
                 () -> new CustomException(ErrorCode.NO_SUCH_EVENT_FOUND_400)
         );
         Bet bet = betRequest.toEntity(user, fightEvent);
-        // 픽 카운트 row 를 항상 같은 순서로 잠가 데드락을 막는다.
-        // 요청 리스트를 제자리 정렬하면 불변 리스트일 때 깨지므로 사본을 정렬한다.
-        List<SingleBetRequest.SingleBetCardRequest> betCards =
-                new ArrayList<>(betRequest.singleBetCards());
-        betCards.sort(comparingLong(SingleBetRequest.SingleBetCardRequest::fighterFightEventId));
-        for (SingleBetRequest.SingleBetCardRequest sbc : betCards) {
+        List<FightPickEvent> pickEvents = new ArrayList<>();
+        for (SingleBetRequest.SingleBetCardRequest sbc : betRequest.singleBetCards()) {
             FighterFightEvent ffe = extractFighterFightEventById(sbc.fighterFightEventId());
             if (ffe.isCanceled()) {
                 throw new CustomException(ErrorCode.FIGHT_CANCELED_400);
@@ -96,14 +100,13 @@ public class BetService {
             BetCard betCard = sbc.toEntity(ffe, bet);
             bet.addBetCard(betCard);
             if (!sbc.betPrediction().isDraw()) {
-                if (sbc.betPrediction().getMyWinnerId().equals(ffe.getWinner().getId()))
-                    fightPickCountRepository.updateFirstFighterPick(ffe.getId(), 1);
-                else
-                    fightPickCountRepository.updateLastFighterPick(ffe.getId(), 1);
+                pickEvents.add(FightPickEvent.of(ffe.getId(), pickSide(sbc.betPrediction(), ffe), 1));
             }
         }
         betRepository.save(bet);
         user.updatePoint(user.getPoint() - betRequest.seedPoint());
+        // 픽 카운트 반영은 마지막에 한 번만. 락 획득 순서·보유 시간은 publisher 뒤편에서 관리한다.
+        fightPickEventPublisher.publish(pickEvents);
         return user.getPoint();
     }
 
@@ -147,20 +150,19 @@ public class BetService {
                 }
             }
         });
+        List<FightPickEvent> pickEvents = new ArrayList<>();
         for (BetCard betCard : bet.getBetCards()) {
             FighterFightEvent betCardFfe = betCard.getFighterFightEvent();
             if (!betCard.getBetPrediction().isDraw()) {
-                if (betCard.getBetPrediction().getMyWinnerId().equals(betCardFfe.getWinner().getId())) {
-                    fightPickCountRepository.updateFirstFighterPick(betCardFfe.getId(), -1);
-                } else {
-                    fightPickCountRepository.updateLastFighterPick(betCardFfe.getId(), -1);
-                }
+                pickEvents.add(FightPickEvent.of(
+                        betCardFfe.getId(), pickSide(betCard.getBetPrediction(), betCardFfe), -1));
             }
         }
         betRepository.deleteById(betId);
         List<Bet> userBets = betRepository.findByFightEventIdAndUserId(currentEvent.getId(),
                 user.getId());
         user.updatePoint(user.getPoint() + bet.getSeedPoint());
+        fightPickEventPublisher.publish(pickEvents);
         return new BetDeleteResponse(user.getPoint(), BetResponse.builder()
                 .eventName(currentEvent.getName())
                 .singleBets(userBets.stream().map(SingleBetResponse::toDto).toList())
@@ -183,6 +185,13 @@ public class BetService {
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new CustomException(ErrorCode.NO_SUCH_USER_FOUND_400)
         );
+    }
+
+    /** 예측한 승자가 카드의 첫 번째(winner) 선수인지에 따라 증감 대상 컬럼이 갈린다. */
+    private FightPickEvent.PickSide pickSide(BetPrediction prediction, FighterFightEvent ffe) {
+        return prediction.getMyWinnerId().equals(ffe.getWinner().getId())
+                ? FightPickEvent.PickSide.FIRST
+                : FightPickEvent.PickSide.LAST;
     }
 
     private FighterFightEvent extractFighterFightEventById(Long ffeId) {

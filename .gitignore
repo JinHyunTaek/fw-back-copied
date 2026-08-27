@@ -61,5 +61,16 @@ fighter_references
 s3_config.json
 scripts
 
+# 부하 테스트 산출물 (매 실행마다 재생성 · 토큰 포함)
+*.jtl
+jmeter.log
+loadtest/jmeter.log
+loadtest-users.csv
+report-direct*/
+report-kafka*/
+
+# 문서 (로컬 작업물 · 스크립트로 재생성)
+docs/
+
 # macOS
 .DS_Store
