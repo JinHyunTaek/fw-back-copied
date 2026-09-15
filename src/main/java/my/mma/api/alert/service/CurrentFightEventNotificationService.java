@@ -76,7 +76,7 @@ public class CurrentFightEventNotificationService {
             int end = Math.min(i + BATCH_SIZE, userTokens.size());
             List<String> batchTokens = userTokens.subList(i, end);
             MulticastMessage message = buildMulticastMessage(batchTokens, eventName, currentEvent.getId());
-            fcmMessageService.sendEachForMulticast(message);
+            fcmMessageService.sendEachForMulticast(message, batchTokens);
         }
     }
 
@@ -85,6 +85,7 @@ public class CurrentFightEventNotificationService {
         List<String> userTokens = alertRepository.findUserTokens(AlertTarget.UPCOMING_EVENT, eventId);
         for (int i = 0; i < userTokens.size(); i += BATCH_SIZE) {
             int end = Math.min(i + BATCH_SIZE, userTokens.size());
+            List<String> batchTokens = userTokens.subList(i, end);
             MulticastMessage message = MulticastMessage.builder()
                     .setNotification(Notification.builder()
                             .setTitle("경기 예측 점수 정산 완료")
@@ -92,9 +93,9 @@ public class CurrentFightEventNotificationService {
                             .build())
                     .putData("type", "BET_SETTLEMENT")
                     .putData("eventId", String.valueOf(eventId))
-                    .addAllTokens(userTokens.subList(i, end))
+                    .addAllTokens(batchTokens)
                     .build();
-            fcmMessageService.sendEachForMulticast(message);
+            fcmMessageService.sendEachForMulticast(message, batchTokens);
         }
     }
 

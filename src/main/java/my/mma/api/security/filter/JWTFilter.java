@@ -57,7 +57,8 @@ public class JWTFilter extends OncePerRequestFilter {
                 try {
                     jwtUtil.validateToken(accessToken);
                 } catch (CustomException e) {
-                    log.error("e=",e);
+                    // 만료/위조 토큰은 정상 트래픽에서도 흔하다. ERROR 로 남기면 에러 로그가 이걸로 뒤덮인다.
+                    log.warn("invalid jwt token: errorCode={}", e.getErrorCode().name());
                     handleException(response, "Invalid jwt token", HttpServletResponse.SC_UNAUTHORIZED);
                     return;
                 }

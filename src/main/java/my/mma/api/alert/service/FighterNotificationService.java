@@ -51,6 +51,7 @@ public class FighterNotificationService {
             LocalDate date = currentEvent.getDisplayDate();
 //            if (isThisWeek(date)) {
             List<Message> messages = new ArrayList<>();
+            List<String> tokens = new ArrayList<>();
             String eventName = currentEvent.getName();
 
             Map<Long, String> fighterNameMap = getFighterNameMapFromCurrentEvent(currentEvent);
@@ -74,10 +75,12 @@ public class FighterNotificationService {
                         .toList();
                 if (!userAlertedFighterNames.isEmpty()) {
                     log.info("send notification to {}, fighters = {}", user.getNickname(), userAlertedFighterNames);
-                    messages.add(buildFcmMessage(userAlertedFighterNames, eventName, user.getFcmToken()));
+                    messages.add(buildFcmMessage(userAlertedFighterNames, eventName, fcmToken));
+                    // messages 와 순서·크기를 반드시 일치시킨다. 무효 토큰을 인덱스로 되찾기 위함이다.
+                    tokens.add(fcmToken);
                 }
             }
-            fcmMessageService.sendEach(messages);
+            fcmMessageService.sendEach(messages, tokens);
         }
 //        }
     }

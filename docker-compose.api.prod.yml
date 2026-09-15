@@ -5,6 +5,7 @@ services:
       - /home/ubuntu/mma-server/secrets/ufc_data.json:/my-files/ufc_data.json:ro
       - /home/ubuntu/mma-server/secrets/firebase-credentials.json:/my-files/firebase-credentials.json:ro
       - /home/ubuntu/mma-server/secrets/seed_faq.json:/my-files/seed_faq.json:ro
+      - /var/log/myapp:/logs
     image: ${SPRING_ECR_IMAGE}
     container_name: spring-boot-container
     ports:
@@ -24,6 +25,8 @@ services:
       - internal
     expose:
       - 6379
+    # redis 한도(256MB) 제한 (한도 80% 도달 시, Slack 알림)
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - ./redis_data:/data
     restart: always

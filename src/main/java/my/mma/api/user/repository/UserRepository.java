@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
+
+import java.util.Collection;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -44,6 +46,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("update User u set u.earnedBetSucceedPoint=0 where u.earnedBetSucceedPoint > 0")
     void initializeBetEarnedPoints();
+
+    /**
+     * FCM 이 영구 무효(UNREGISTERED 등)로 응답한 토큰을 비운다.
+     * 벌크 연산은 영속성 컨텍스트를 우회하므로 1차 캐시가 낡지 않도록 clearAutomatically 를 켠다.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("update User u set u.fcmToken = null where u.fcmToken in :tokens")
+    int clearFcmTokens(@Param("tokens") Collection<String> tokens);
 
     User findByRoleEquals(String role);
 

@@ -43,6 +43,7 @@ services:
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     volumes:
       - ./grafana-data:/var/lib/grafana
+    mem_limit: 700m
     restart: always
     networks:
       - internal
@@ -50,8 +51,12 @@ services:
   flask-app:
     image: ${FLASK_ECR_IMAGE}
     container_name: flask-container
+    env_file:
+      - .env
+    # 매일 새벽 3시 크롤링(Spring 이 호출) 때 여기까지 치솟는다.
     ports:
       - "5000:5000"
+    mem_limit: 850m
 
 networks:
   internal:

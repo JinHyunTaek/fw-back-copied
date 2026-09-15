@@ -45,7 +45,7 @@ public class WeeklyFightEventNotificationService {
                 List<String> batchTokens = fcmTokens.subList(i, end);
                 MulticastMessage message = buildMulticastMessage(
                         batchTokens, weeklyFightEvent.getName(), weeklyFightEvent.getLocation());
-                fcmMessageService.sendEachForMulticast(message);
+                fcmMessageService.sendEachForMulticast(message, batchTokens);
             }
         }
     }

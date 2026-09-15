@@ -21,8 +21,6 @@ public class BasicExceptionAdvice {
     public ResponseEntity<BasicErrorResponse> handleCustomException(
             CustomException e
     ) {
-        if(e.getMessage() != null)
-            log.error("ex = {}, detail error message = {}",e.getErrorCode().name(),e.getMessage());
         return throwException(e.getErrorCode(), e);
     }
 
@@ -61,8 +59,7 @@ public class BasicExceptionAdvice {
     private ResponseEntity<BasicErrorResponse> throwException(
             ErrorCode errorCode, Exception e
     ){
-        log.error("ex = {}", e.getMessage());
-        log.error("detail message = ", e);
+        ExceptionLogger.log(log, errorCode, e);
         BasicErrorResponse response = BasicErrorResponse.builder()
                 .errorCode(errorCode.name())
                 .status(errorCode.getStatus())
@@ -74,4 +71,3 @@ public class BasicExceptionAdvice {
     }
 
 }
-

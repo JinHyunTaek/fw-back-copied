@@ -51,6 +51,7 @@ nginx.conf
 .claude
 CLAUDE_RESUME.md
 portfolio_ppt
+portfolio_ppt/roadmap_ppt
 spy.log
 
 # 포폴/이미지 생성 작업용 로컬 상태 파일
