@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,12 +25,23 @@ public class GlobalConfig {
                 .build();
     }
 
+    /**
+     * 크롤러(Flask) 호출용. Lambda Function URL 은 인터넷에 열려 있어 공유 시크릿 헤더로 호출자를 제한한다.
+     * flask.api-key 가 비어 있으면(dev·EC2 직결) 헤더를 붙이지 않아 기존 동작과 같다.
+     */
     @Bean("flaskRestTemplate")
-    public RestTemplate flaskRestTemplate(RestTemplateBuilder builder){
-        return builder
+    public RestTemplate flaskRestTemplate(RestTemplateBuilder builder,
+                                          @Value("${flask.api-key:}") String flaskApiKey){
+        builder = builder
                 .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofMinutes(5))
-                .build();
+                .setReadTimeout(Duration.ofMinutes(5));
+        if (StringUtils.hasText(flaskApiKey)) {
+            builder = builder.additionalInterceptors((request, body, execution) -> {
+                request.getHeaders().set("X-Crawler-Key", flaskApiKey);
+                return execution.execute(request, body);
+            });
+        }
+        return builder.build();
     }
 
     @Bean
