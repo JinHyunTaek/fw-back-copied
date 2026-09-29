@@ -83,6 +83,16 @@ class FlaskEventServiceTest {
 
     // --- Helpers ---
 
+    /**
+     * 리팩터링 후: 느린 스크래핑(fetch)과 DB 반영(apply)이 분리됨.
+     * 기존 syncFightEvents() 한 방 호출과 동일한 흐름을 재현한다.
+     */
+    private void runSync() {
+        CrawledUpcomingEvent upcoming = flaskEventService.fetchUpcoming();
+        var prevById = flaskEventService.fetchPrevForPastEvents(upcoming);
+        flaskEventService.apply(upcoming, prevById);
+    }
+
     private CrawledFightCard card(String winner, String loser) {
         return new CrawledFightCard(winner, loser, null, null, "Lightweight", false, false, false, null, null, false, false);
     }
@@ -186,7 +196,7 @@ class FlaskEventServiceTest {
         void savesNewEvent() {
             givenCrawledUpcomingFightEventReturns(baseCards());
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of());
-            flaskEventService.syncFightEvents();
+            runSync();
             verify(fightEventRepository).save(any(FightEvent.class));
         }
     }
@@ -209,7 +219,7 @@ class FlaskEventServiceTest {
             givenCrawledUpcomingFightEventReturns(baseCards());
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of(existing));
 
-            flaskEventService.syncFightEvents();
+            runSync();
 
             List<FighterFightEvent> ffes = existing.getFighterFightEvents();
             assertThat(ffes).hasSize(5);
@@ -231,7 +241,7 @@ class FlaskEventServiceTest {
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of(existing));
 
             //when
-            flaskEventService.syncFightEvents();
+            runSync();
 
             //then
             List<FighterFightEvent> ffes = existing.getFighterFightEvents();
@@ -257,7 +267,7 @@ class FlaskEventServiceTest {
             // while repository returns five cards (means one card is canceled)
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of(existing));
 
-            flaskEventService.syncFightEvents();
+            runSync();
 
             List<FighterFightEvent> ffes = existing.getFighterFightEvents();
             assertThat(ffes.stream().filter(FighterFightEvent::isCanceled)).hasSize(1);
@@ -290,7 +300,7 @@ class FlaskEventServiceTest {
             givenCrawledUpcomingFightEventReturns(baseCards());
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of(existing));
 
-            flaskEventService.syncFightEvents();
+            runSync();
 
             assertThat(canceledFfe.isCanceled()).isFalse();
             assertThat(existing.getFighterFightEvents().stream().noneMatch(FighterFightEvent::isCanceled)).isTrue();
@@ -311,7 +321,7 @@ class FlaskEventServiceTest {
             givenCrawledUpcomingFightEventReturns(baseCards());
             given(fightEventRepository.findByCompletedIsFalse()).willReturn(List.of(existing));
 
-            flaskEventService.syncFightEvents();
+            runSync();
 
             // canceled 포함 총 5개여야 함 (중복 생성 없음)
             assertThat(existing.getFighterFightEvents()).hasSize(5);
@@ -351,7 +361,7 @@ class FlaskEventServiceTest {
             given(restTemplate.getForObject(contains("/prev_event"), eq(CrawledPrevEvent.class)))
                     .willReturn(new CrawledPrevEvent("UFC 313", prevResultCards));
 
-            flaskEventService.syncFightEvents();
+            runSync();
 
             assertThat(pastEvent.isCompleted()).isTrue();
         }

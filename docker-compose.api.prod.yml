@@ -1,4 +1,23 @@
 services:
+  # 서비스 진입점. 모니터링 EC2 를 없애면서 이쪽으로 옮겨왔다 (2026-09-18).
+  # TLS 종료 후 같은 compose 네트워크의 spring-boot-app:8080 으로 프록시한다.
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy   # certbot deploy 훅(reload-nginx.sh)이 이 이름으로 reload 한다
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # certbot(호스트, webroot 방식)이 검증 파일을 놓는 곳
+      - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      - spring-boot-app
+    networks:
+      - internal
+    restart: always
+
 # docker compose down, docker stop 써야 restart 정책 무시됨 (ec2 reboot, app crash, oom 시에는 자동 재실행)
   spring-boot-app:
     volumes:

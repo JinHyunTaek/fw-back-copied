@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static my.mma.admin.event.dto.CrawledUpcomingEvent.FighterCrawlerDto;
@@ -61,67 +62,80 @@ public class FlaskEventService {
     }
 
     /**
-     * flask api: 차후 경기들 및 해당 경기에 참여하는 파이터 정보 모두 반환
+     * flask api: 차후 경기들 및 해당 경기에 참여하는 파이터 정보 모두 반환.
+     * 스크래핑(~1분)이므로 DB 트랜잭션 밖에서 호출한다.
      */
     @Loggable
+    public CrawledUpcomingEvent fetchUpcoming() {
+        return handleGetRequest(flaskURI + "/upcoming_event", CrawledUpcomingEvent.class);
+    }
+
+    /**
+     * upcoming 크롤 결과와 DB를 비교해 past가 된 이벤트를 찾고, 각 이벤트의 prev_event를 미리 스크래핑한다.
+     * prev_event 스크래핑(past당 ~30초)이 트랜잭션 밖에서 끝나도록 apply() 전에 호출한다.
+     *
+     * @return key = FightEvent.id, value = 해당 이벤트의 prev 크롤 결과
+     */
+    @Loggable
+    public Map<Long, CrawledPrevEvent> fetchPrevForPastEvents(CrawledUpcomingEvent upcoming) {
+        Set<LocalDate> crawledEventDates = upcoming.events().stream()
+                .map(EventCrawlerDto::toEntityForEventName)
+                .map(FightEvent::getEventDate)
+                .collect(Collectors.toSet());
+        Map<Long, CrawledPrevEvent> prevById = new HashMap<>();
+        for (FightEvent existing : fightEventRepository.findByCompletedIsFalse()) {
+            // 크롤된 upcoming 목록에 없는 기존 이벤트 = past가 된 이벤트
+            if (!crawledEventDates.contains(existing.getEventDate())) {
+                log.info("fetch prev_event for past event, eventName={}", existing.getName());
+                CrawledPrevEvent prev = handleGetRequest(
+                        prevEventUrl(existing.getName(), existing.getEventDate()), CrawledPrevEvent.class);
+                prevById.put(existing.getId(), prev);
+            }
+        }
+        return prevById;
+    }
+
+    // 이미 fetch된 데이터만으로 DB를 갱신. HTTP 호출이 없어 트랜잭션이 짧게 유지하는 것이 목적
+    @Loggable
     @Transactional
-    public void syncFightEvents() {
-        try {
-            processFetchedEventData(handleGetRequest(flaskURI + "/upcoming_event", CrawledUpcomingEvent.class));
-        } catch (Exception e) {
-            log.error("Error while synchronizing fight events, e=", e);
-            adminPushNotificationService.sendNotificationToAdmin("Error while synchronizing fight events");
+    public void apply(CrawledUpcomingEvent upcoming, Map<Long, CrawledPrevEvent> prevById) {
+        List<FightEvent> existingUpcomingEvents = fightEventRepository.findByCompletedIsFalse();
+        // fighter 부터 삽입
+        Map<String, Fighter> crawledFighterNameMap = fighterRepository.findAllByNameIn(
+                        upcoming.fighters().stream().map(FighterCrawlerDto::name).toList())
+                .stream().collect(Collectors.toMap(Fighter::getName, f -> f));
+        saveOrUpdateFighters(upcoming.fighters(), crawledFighterNameMap);
+        // upcoming -> past 상태가 된 이벤트를 업데이트 (prev는 미리 fetch한 map에서 사용)
+        markPastEvents(existingUpcomingEvents, prevById);
+        // 기존 db에 없던 새로 생긴 upcoming event 삽입
+        saveNewUpcomingEvents(upcoming.events(), existingUpcomingEvents, crawledFighterNameMap);
+    }
+
+    private void markPastEvents(List<FightEvent> existingUpcomingEvents, Map<Long, CrawledPrevEvent> prevById) {
+        // 미리 fetch한 prev_event가 있는 기존 이벤트 = past가 된 이벤트
+        // → complete 상태로 update (+해당 이벤트에 포함된 fighter 전적 업데이트)
+        for (FightEvent existing : existingUpcomingEvents) {
+            CrawledPrevEvent prev = prevById.get(existing.getId());
+            if (prev != null) {
+                log.info("mark event as completed, eventName={}", existing.getName());
+                updateCompletedFightEvent(prev, existing);
+            }
         }
     }
 
-    private void processFetchedEventData(CrawledUpcomingEvent dto) {
-        List<FightEvent> existingUpcomingEvents = fightEventRepository.findByCompletedIsFalse();
-        // DB에 존재하는 upcoming Events
-        //
-        List<FightEvent> crawledUpcomingEvents = dto.events().stream()
-                .map(EventCrawlerDto::toEntityForEventName)
-                .toList();
-        // fighter 부터 삽입
-        Map<String, Fighter> crawledFighterNameMap = fighterRepository.findAllByNameIn(
-                        dto.fighters().stream().map(FighterCrawlerDto::name).toList())
-                .stream().collect(Collectors.toMap(Fighter::getName, f -> f));
-        saveOrUpdateFighters(dto.fighters(), crawledFighterNameMap);
-        // upcoming -> past 상태가 된 이벤트를 업데이트
-        markPastEvents(existingUpcomingEvents, crawledUpcomingEvents);
-        // 기존 db에 없던 새로 생긴 upcoming event 삽입
-        saveNewUpcomingEvents(dto.events(), existingUpcomingEvents, crawledFighterNameMap);
-    }
-
-    private void markPastEvents(List<FightEvent> existingUpcomingEvents, List<FightEvent> crawledUpcomingEvents) {
-        /** DB에 존재하는 upcoming events, 새로 불러온 upcoming events 비교
-         * 새로 불러온 upcoming event list에 DB에 존재하는 upcoming event가 포함되지 않으면,
-         * DB의 upcoming event를 complete 상태로 update (+해당 이벤트에 포함된 fighter 전적 업데이트)
-         */
-        existingUpcomingEvents.stream()
-                .filter(e -> crawledUpcomingEvents.stream().noneMatch(crawledEvent ->
-                        crawledEvent.getEventDate().equals(e.getEventDate())))
-                .forEach(this::markEventAsCompleted);
-    }
-
-    private void markEventAsCompleted(FightEvent eventToMarkComplete) {
-        LocalDate eventDate = eventToMarkComplete.getEventDate();
-        String eventName = eventToMarkComplete.getName();
-        log.info("mark event as completed, eventName={}", eventName);
-        String url = UriComponentsBuilder.fromHttpUrl(flaskURI + "/prev_event")
+    private String prevEventUrl(String eventName, LocalDate eventDate) {
+        return UriComponentsBuilder.fromHttpUrl(flaskURI + "/prev_event")
                 .queryParam("eventName", eventName)
                 .queryParam("eventDate", eventDate.format(
-                        DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH))
-                )
+                        DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH)))
                 .build()
                 .toUriString();
-        CrawledPrevEvent crawledPrevEvent = handleGetRequest(url, CrawledPrevEvent.class);
-        updateCompletedFightEvent(crawledPrevEvent, eventToMarkComplete);
     }
 
 
     /**
      * 이미 completed 처리된 이벤트의 FotN/PotN 데이터만 갱신.
-     * syncFightEvents()는 completed 이벤트를 건너뛰므로, 보너스 폴링 전용으로 사용.
+     * 동기화 흐름(apply)은 completed 이벤트를 건너뛰므로, 보너스 폴링 전용으로 사용.
      *
      * @return 하나라도 FotN/PotN이 존재하면 true
      */
@@ -130,13 +144,8 @@ public class FlaskEventService {
     public boolean syncBonusDataForEvent(Long eventId) {
         FightEvent event = fightEventRepository.findByIdWithFfes(eventId)
                 .orElseThrow(() -> new CustomException(SERVER_ERROR_500));
-        String url = UriComponentsBuilder.fromHttpUrl(flaskURI + "/prev_event")
-                .queryParam("eventName", event.getName())
-                .queryParam("eventDate", event.getEventDate().format(
-                        DateTimeFormatter.ofPattern("MMMM dd, yyyy", Locale.ENGLISH)))
-                .build()
-                .toUriString();
-        CrawledPrevEvent crawledPrevEvent = handleGetRequest(url, CrawledPrevEvent.class);
+        CrawledPrevEvent crawledPrevEvent = handleGetRequest(
+                prevEventUrl(event.getName(), event.getEventDate()), CrawledPrevEvent.class);
         for (CrawledFightCard card : crawledPrevEvent.crawledFightCards()) {
             if (card.isFotN() || card.isPotN()) {
                 return true;
