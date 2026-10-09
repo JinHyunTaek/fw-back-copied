@@ -130,7 +130,7 @@ public class BetService {
         if (CustomDateUtils.isThisWeekend(currentEvent.getDisplayDate()) ||
                 (eventStartDateTime != null && LocalDateTime.now().isAfter((eventStartDateTime))))
             throw new CustomException(ErrorCode.BET_NOT_AVAILABLE_DATE_403);
-        User user = extractUserByEmail(email);
+        User user = userRepository.findByEmailWithLock(email);
         Bet bet = betRepository.findByIdAndUserId(betId, user.getId()).orElseThrow(
                 () -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND)
         );
